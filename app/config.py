@@ -113,7 +113,7 @@ sites_dict = {
                          'Test'],
         'floors_col': 'Group',
         'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2022, 12, 30, 12, 0),
+        'end_exp_date_utc': datetime(2023, 2, 28, 12, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.136
@@ -130,7 +130,7 @@ sites_dict = {
                          'Test'],
         'floors_col': 'Group',
         'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2022, 12, 30, 12, 0),
+        'end_exp_date_utc': datetime(2022, 12, 28, 12, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.136

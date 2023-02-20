@@ -19,7 +19,7 @@ def set_params_exp(col1, col2):
 
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def sim_df_dict(building_param, _df_dict_room, _start_exp_date_utc, _groups=[], _funcs=[]):
     building_dict = cnf.sites_dict[building_param]
     floor_to_rooms_dict = rooms.get_floor_to_rooms_dict(building_dict['rooms_file'], building_dict['floors_col'])
@@ -54,7 +54,7 @@ def get_exp_metrics(df_sum, flight_duration, building_dict):
     return df_sum
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_exp_summary_dict(building_param, _df_dict_room):
     building_dict = cnf.sites_dict[building_param]
     floor_to_rooms_dict = rooms.get_floor_to_rooms_dict(building_dict['rooms_file'], building_dict['floors_col'])
@@ -108,7 +108,7 @@ def _groups_stats_relative(pre_dict, post_dict):
     return pre_avg, post_avg, diff, se
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_exp_summary_df(test_dict, control_dict):
     avg_test, avg_cont, diff, se = _groups_stats_absolute(test_dict, control_dict)
     df_sum = pd.concat([avg_test, avg_cont], axis=1)
@@ -118,7 +118,7 @@ def get_exp_summary_df(test_dict, control_dict):
     return df_sum
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_exp_times(building_param):
     building_dict = cnf.sites_dict[building_param]
     start_calibration_date_utc = (building_dict['start_exp_date_utc'] - timedelta(days=building_dict['calibration_days']))
@@ -127,7 +127,7 @@ def get_exp_times(building_param):
     return start_calibration_date_utc, start_exp_date_utc, end_exp_date_utc
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_exp_comparison_df(test_pre_dict, test_dict_post_dict, cont_pre_dict, contpost_dict):
     _, _, test_diff, test_se = _groups_stats_relative(test_pre_dict, test_dict_post_dict)
     _, _, cont_diff, cont_se = _groups_stats_relative(cont_pre_dict, contpost_dict)
@@ -195,7 +195,7 @@ def show_summary_tables(_test_dict, _control_dict, _col, building_param):
     _col.expander(title, expanded=False).write(f'{intro[2]}\n{body}')
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_selected_metric_df(_test_dict, _control_dict, building_param, metric_param, time_param):
     df = _test_dict[cnf.avg_group_df_name][[metric_param]].join(
         _control_dict[cnf.avg_group_df_name][[metric_param]],

@@ -26,7 +26,7 @@ def convert_object_cols_to_boolean(df):
     return df
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_config_dicts(building_param, data_param, time_param=None):
     building_dict = cnf.sites_dict[building_param]
     param_dict = cnf.data_param_dict[data_param]
@@ -37,7 +37,7 @@ def get_config_dicts(building_param, data_param, time_param=None):
         return building_dict, param_dict
 
 
-@st.experimental_memo(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def info(duration, test_name, market_based_electricity_cost, location_based_co2):
     title = 'See how it is calculated'
     intro = [f'''

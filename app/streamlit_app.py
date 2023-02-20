@@ -27,8 +27,8 @@ def set_homepage():
     
     print('*************** last_cache_date:', times.last_cache_date())
     if times.utc_now().strftime('%Y-%m-%d') != times.last_cache_date():
-        st.experimental_singleton.clear()
-        st.experimental_memo.clear()
+        st.cache_data.clear()
+        st.cache_resource.clear()
 
     st.header('TEMPERATURE MONITORING DASHBOARD')
     st.caption(f'Version {cnf.app_version}, release data: {cnf.release_date}')
@@ -87,7 +87,8 @@ def main():
     charts_list_of_dicts = []
     for days_back in reversed(range(1, 8)):
         date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
-        charts_list_of_dicts.append(fb.read_and_unpickle(f'old_charts/{date_back}', storage_bucket))
+        times.log(f'loading file charts/rooms/{date_back}')
+        charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
 
     charts_dict_of_dfs = {}
     for building_param in [bp for bp in charts_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
@@ -108,8 +109,8 @@ def main():
     end_date = min(date_yesterday, cnf.sites_dict[tab3_building_param]['end_exp_date_utc'])
     exp_list_of_dicts = []
     for date in times.daterange(start_date, end_date):
-        times.log(f'loading file experiments/{date.strftime("%Y/%m/%d")}')
-        exp_list_of_dicts.append(fb.read_and_unpickle(f'old_experiments/{date.strftime("%Y/%m/%d")}', storage_bucket))
+        times.log(f'loading file experiments/rooms/{date.strftime("%Y/%m/%d")}')
+        exp_list_of_dicts.append(fb.read_and_unpickle(f'experiments/rooms/{date.strftime("%Y/%m/%d")}', storage_bucket))
 
 
     exp_dict_of_dfs = {}

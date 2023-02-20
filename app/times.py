@@ -16,7 +16,7 @@ def utc_now():
     return datetime.utcnow()
 
 
-@st.experimental_singleton
+@st.cache_data
 def last_cache_date():
     return utc_now().strftime('%Y-%m-%d')
 
