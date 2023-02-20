@@ -11,21 +11,21 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-def set_date_vars(df, time_param_dict, to_zone=None):
+def set_date_vars(df, agg_param_dict, to_zone=None):
 
     datetime_col = pd.to_datetime(df.index, format="%Y-%m-%d %H:%M:%S")
     if to_zone is not None:
         datetime_col = times.change_pd_time_zone(datetime_col, 'UTC', to_zone)
 
-    aggregation_field_name = time_param_dict['aggregation_field_name']
-    aggregation_strftime = time_param_dict['aggregation_strftime']
+    aggregation_field_name = agg_param_dict['aggregation_field_name']
+    aggregation_strftime = agg_param_dict['aggregation_strftime']
     df[aggregation_field_name] = datetime_col.strftime(aggregation_strftime)
     return df.groupby(by=[aggregation_field_name]).mean()
 
 
-def plot_heatmap(df, time_param, plot_parms, title, to_zone, scale, col):
-    time_param_dict = cnf.time_param_dict[time_param]
-    df_agg = set_date_vars(df, time_param_dict, to_zone=to_zone)
+def plot_heatmap(df, agg_param, plot_parms, title, to_zone, scale, col):
+    agg_param_dict = cnf.agg_param_dict[agg_param]
+    df_agg = set_date_vars(df, agg_param_dict, to_zone=to_zone)
     fmt, vmin, vmax = plot_parms
     fig = plt.figure(figsize=(scale*24, scale*len(df_agg.columns)))
     sns.set(font_scale=scale*2)
@@ -42,7 +42,7 @@ def plot_heatmap(df, time_param, plot_parms, title, to_zone, scale, col):
                     vmin=vmin, vmax=vmax, cbar=False)
         labels_fontsize = scale * 24
         plt.title(title, fontsize=labels_fontsize)  # title with fontsize 20
-        plt.xlabel(time_param_dict['aggregation_field_name'], fontsize=labels_fontsize)  # x-axis label with fontsize 15
+        plt.xlabel(agg_param_dict['aggregation_field_name'], fontsize=labels_fontsize)  # x-axis label with fontsize 15
         #plt.ylabel(ylabel, fontsize=labels_fontsize) # y-axis label with fontsize 15
         plt.yticks(rotation=0)
         col.write(fig)
@@ -85,6 +85,8 @@ def charts(df, _max_datetime):
     else:
         xvars = [col for col in df.columns if
                  col not in ('Percentage of A/C usage (%)', "Cooling temperature set point (°C)", '_Outside temperature 3h prediction (°C)')]
+
+
 
     df.index.name = "Time"
     df = df[xvars]

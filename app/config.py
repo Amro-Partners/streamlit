@@ -41,15 +41,15 @@ data_param_dict = {
         'vmin': 15,
         'vmax': 40
     },
-    # "Heating temperature set point (°C)": {
-    #     'sites_dict_val': 'VRV_setpoint_collections',
-    #     'is_rooms': True,
-    #     'field_keyword': ['SetTempHeat'],
-    #     'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-    #     'fmt': '.1f',
-    #     'vmin': 15,
-    #     'vmax': 40
-    # },
+    "Heating temperature set point (°C)": {
+        'sites_dict_val': 'VRV_setpoint_collections',
+        'is_rooms': True,
+        'field_keyword': ['SetTempHeat'],
+        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
+        'fmt': '.1f',
+        'vmin': 15,
+        'vmax': 40
+    },
     'Percentage of A/C usage (%)': {
         'sites_dict_val': 'VRV_collections',
         'is_rooms': True,
@@ -78,7 +78,7 @@ data_param_dict = {
 
 
 # TODO: we need to localise the start_date and end_date
-time_param_dict = {
+agg_param_dict = {
     "Date (last 7 days)": {
         'start_date_utc': (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
         'end_date_utc': (times.utc_now()).replace(hour=0, minute=0, second=0, microsecond=0),

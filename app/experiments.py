@@ -13,9 +13,9 @@ def set_params_exp(col1, col2):
     building_param = col1.radio('Select Flight', cnf.test_sites, key='exp_building')
     building_dict = cnf.sites_dict[building_param]
     metric_param = col1.radio('Select chart metric',  cnf.metrics, key='exp_chart_metric')
-    time_param = col1.radio('Select chart frequency',  cnf.time_agg_dict.keys(), key='exp_chart_freq')
+    agg_param = col1.radio('Select chart frequency',  cnf.time_agg_dict.keys(), key='exp_chart_freq')
     raw_data = col2.checkbox("Show raw data", value=False, key="exp_raw_data")
-    return building_param, metric_param, time_param, raw_data
+    return building_param, metric_param, agg_param, raw_data
 
 
 
@@ -196,12 +196,12 @@ def show_summary_tables(_test_dict, _control_dict, _col, building_param):
 
 
 @st.cache_data(show_spinner=False)
-def get_selected_metric_df(_test_dict, _control_dict, building_param, metric_param, time_param):
+def get_selected_metric_df(_test_dict, _control_dict, building_param, metric_param, agg_param):
     df = _test_dict[cnf.avg_group_df_name][[metric_param]].join(
         _control_dict[cnf.avg_group_df_name][[metric_param]],
         lsuffix='_'+cnf.test_group,
         rsuffix='_'+cnf.control_group)
-    df = df.groupby(pd.Grouper(freq=cnf.time_agg_dict[time_param], origin='epoch')).mean()
+    df = df.groupby(pd.Grouper(freq=cnf.time_agg_dict[agg_param], origin='epoch')).mean()
     df.index.name = "Time"
     return df
 
