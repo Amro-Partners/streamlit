@@ -23,10 +23,10 @@ def set_date_vars(df, agg_param_dict, to_zone=None):
     return df.groupby(by=[aggregation_field_name]).mean()
 
 
-def plot_heatmap(df, agg_param, plot_parms, title, to_zone, scale, col):
+def plot_heatmap(df, agg_param, fmt, title, to_zone, scale, col):
     agg_param_dict = cnf.agg_param_dict[agg_param]
     df_agg = set_date_vars(df, agg_param_dict, to_zone=to_zone)
-    fmt, vmin, vmax = plot_parms
+    vmin, vmax = df_agg.min().min(), df_agg.max().max()
     fig = plt.figure(figsize=(scale*24, scale*len(df_agg.columns)))
     sns.set(font_scale=scale*2)
 
@@ -34,6 +34,7 @@ def plot_heatmap(df, agg_param, plot_parms, title, to_zone, scale, col):
         col.header(title)
         col.dataframe(df_agg.sort_index())
     else:
+
         df_plot = df_agg.T.sort_index()
         sns.heatmap(df_plot,
                     annot=True, annot_kws={"fontsize": scale * 16, "weight": "bold"},
@@ -67,42 +68,16 @@ def create_start_end_times(df, col_name):
 
 def charts(df, _max_datetime):
     # TODO: Ugly code. Must improve this code, no need for a separate chart for predictions
-
-    usage_is_bool = (df.dtypes['Percentage of A/C usage (%)'] == 'bool')
-    if usage_is_bool:
-        df_on_off_times = create_start_end_times(df, 'Percentage of A/C usage (%)')
-    else:
-        df_usage = df[['Percentage of A/C usage (%)']]
-        df_usage.index.name = "Time"
-        df_usage = df_usage.reset_index().melt('Time')
-
+    df_on_off_times = create_start_end_times(df, 'Percentage of A/C usage (%)')
     pred_row = pd.DataFrame([[None]*len(df.columns)], columns=df.columns, index=[_max_datetime+timedelta(hours=3)])
     pred_row['Outside temperature (°C)'] = df.iloc[-1]['_Outside temperature 3h prediction (°C)']
     df = pd.concat([df, pred_row])
-    if usage_is_bool:
-        xvars = [col for col in df.columns if
-                 col not in ('Percentage of A/C usage (%)', '_Outside temperature 3h prediction (°C)')]
-    else:
-        xvars = [col for col in df.columns if
-                 col not in ('Percentage of A/C usage (%)', "Cooling temperature set point (°C)", '_Outside temperature 3h prediction (°C)')]
+    xvars = [col for col in df.columns if
+             col not in ('Percentage of A/C usage (%)', '_Outside temperature 3h prediction (°C)')]
 
-
-
+    range_ = [cnf.chart_colours_dict[xvar] for xvar in xvars]
     df.index.name = "Time"
     df = df[xvars]
-
-    domain = xvars
-    if len(xvars) == 2:
-        range_ = ['black', 'burlywood']
-    elif len(xvars) == 3:
-        range_ = ['black', 'lightskyblue', 'burlywood']
-    else:
-        range_ = ['black', 'lightskyblue', 'burlywood']
-
-    if not usage_is_bool:
-        domain += ['Percentage of A/C usage (%)']
-        range_ += ['lightgrey']
-
 
     df = df.reset_index().melt('Time')
     chart = (alt.Chart(df.loc[df['Time'] <= _max_datetime]).mark_line().encode(
@@ -111,34 +86,24 @@ def charts(df, _max_datetime):
         color=alt.Color('variable',
                         legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
                                           orient='bottom', title=''),
-                        scale=alt.Scale(domain=domain, range=range_)
+                        scale=alt.Scale(domain=xvars, range=range_)
                         )
     ))
 
-    if usage_is_bool:
-
-        pred_chart = (alt.Chart(df.loc[df['Time'] >= _max_datetime]).mark_line(strokeDash=[1, 1]).encode(
-            x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-            y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False)),
-            color=alt.Color('variable',
-                            legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
-                                              orient='bottom', title=''),
-                            scale=alt.Scale(domain=domain, range=range_)
-                            )
-        ))
-
-        rect = alt.Chart(df_on_off_times).mark_rect().mark_rect(opacity=0.2).encode(
-            x='start_on_times:T',
-            x2='end_on_times:T'
-        )
-        ch_lay = alt.layer(chart, pred_chart, rect).configure_view(strokeWidth=0)
-    else:
-        line =(alt.Chart(df_usage.loc[df_usage['Time'] <= _max_datetime]).mark_line().encode(
+    pred_chart = (alt.Chart(df.loc[df['Time'] >= _max_datetime]).mark_line(strokeDash=[1, 1]).encode(
         x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False, format=".0%")),
-            color=alt.value('lightgrey'),
-        ))
+        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False)),
+        color=alt.Color('variable',
+                        legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
+                                          orient='bottom', title=''),
+                        scale=alt.Scale(domain=xvars, range=range_)
+                        )
+    ))
 
-        ch_lay = alt.layer(chart, line).resolve_scale(y='independent')
+    rect = alt.Chart(df_on_off_times).mark_rect().mark_rect(opacity=0.2).encode(
+        x='start_on_times:T',
+        x2='end_on_times:T'
+    )
+    ch_lay = alt.layer(chart, pred_chart, rect).configure_view(strokeWidth=0)
 
     return ch_lay

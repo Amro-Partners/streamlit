@@ -16,7 +16,6 @@ tabs = ["HEATMAPS", "CHARTS", "EXPERIMENTS"]
 
 '''
 data_param_dict maps keys strings to be selected by user (as keys) to a list of parameters:
-sites_dict_val: value to look in sites_dict[site] for the collection(s) name
 field_keyword:substrings of the required field within the firebase collection
 fmt: heatmap text format
 vmin: heatmap scale minimum
@@ -24,52 +23,36 @@ vmax: heatmap scale maximum
 '''
 data_param_dict = {
     "Avg. room temperature (°C)": {
-        'sites_dict_val': 'VRV_collections',
         'is_rooms': True,
         'field_keyword': ['Room_Temp', 'RoomTemp'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f',
-        'vmin': 15,
-        'vmax': 40
+        'fmt': '.1f'
     },
     "Cooling temperature set point (°C)": {
-        'sites_dict_val': 'VRV_setpoint_collections',
         'is_rooms': True,
         'field_keyword': ['SetTempCool'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f',
-        'vmin': 15,
-        'vmax': 40
+        'fmt': '.1f'
     },
     "Heating temperature set point (°C)": {
-        'sites_dict_val': 'VRV_setpoint_collections',
         'is_rooms': True,
         'field_keyword': ['SetTempHeat'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f',
-        'vmin': 15,
-        'vmax': 40
+        'fmt': '.1f'
     },
     'Percentage of A/C usage (%)': {
-        'sites_dict_val': 'VRV_collections',
         'is_rooms': True,
         'field_keyword': ['OnOffState', 'State_BI'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '0.0%',
-        'vmin': 0,
-        'vmax': 1
+        'fmt': '0.0%'
     },
     'Outside temperature (°C)': {
-        'sites_dict_val': 'weather_collection',
         'is_rooms': False,
         'field_keyword': ['temperature'],
         'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f',
-        'vmin': 15,
-        'vmax': 40
+        'fmt': '.1f'
     },
     '_Outside temperature 3h prediction (°C)': {
-        'sites_dict_val': 'weather_collection',
         'is_rooms': False,
         'field_keyword': ['3h_temperature_interp'],
         'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
@@ -102,13 +85,8 @@ agg_param_dict = {
 
 sites_dict = {
     "Amro Seville fan speed pilot CL01": {
-        "VRV_collections": [('BMS_Seville_Climatizacion_VRV', None)],
-        'VRV_setpoint_collections': [('BMS_Seville_Climatizacion_VRV_setpoints', None)],
-        'weather_collection': [('weather_Seville', 'Outside temperature (°C) Seville')],
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_seville_CL01_exp.csv",
-        'gateway_reg_express': r'MIT([\d]+).[\w.-]+_([\d]+).',
-        'coordinates': (37.37821, -5.97253),
         'floors_order': ['Control',
                          'Test'],
         'floors_col': 'Group',
@@ -119,13 +97,8 @@ sites_dict = {
         'location_based_co2': 0.136
     },
     "Amro Seville ventilation temp pilot CL02": {
-        "VRV_collections": [('BMS_Seville_Climatizacion_VRV', None)],
-        'VRV_setpoint_collections': [('BMS_Seville_Climatizacion_VRV_setpoints', None)],
-        'weather_collection': [('weather_Seville', 'Outside temperature (°C) Seville')],
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_seville_CL02_exp.csv",
-        'gateway_reg_express': r'MIT([\d]+).[\w.-]+_([\d]+).',
-        'coordinates': (37.37821, -5.97253),
         'floors_order': ['Control',
                          'Test'],
         'floors_col': 'Group',
@@ -136,30 +109,15 @@ sites_dict = {
         'location_based_co2': 0.136
     },
     "Amro Seville": {
-        "VRV_collections": [('BMS_Seville_Climatizacion_VRV', None)],
-        'VRV_setpoint_collections': [('BMS_Seville_Climatizacion_VRV_setpoints', None)],
-        'weather_collection': [('weather_Seville', 'Outside temperature (°C) Seville')],
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_seville.csv",
-        'gateway_reg_express': r'MIT([\d]+).[\w.-]+_([\d]+).',
-        'coordinates': (37.37821, -5.97253),
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3", "Planta 4",
                          "Planta 5", "Planta 6", "Planta 7", "Planta 8", "Planta 9"],
         'floors_col': 'Title'
     },
     "Amro Malaga": {
-        "VRV_collections": [("BMS_Malaga_Climatizacion_Planta_S", "Planta S"),
-                            ("BMS_Malaga_Climatizacion_Planta_B", "Planta B"),
-                            ("BMS_Malaga_Climatizacion_Planta_1", "Planta 1"),
-                            ("BMS_Malaga_Climatizacion_Planta_2", "Planta 2"),
-                            ("BMS_Malaga_Climatizacion_Planta_3",  "Planta 3"),
-                            ("BMS_Malaga_Climatizacion_Planta_4", "Planta 4")],
-        'VRV_setpoint_collections': [],
-        'weather_collection': [('weather_Malaga', 'Outside temperature (°C) Malaga')],
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
-        'gateway_reg_express': r'VRV([\d]+).[\w.-]+_([\d]+).',
-        'coordinates': (36.726308, -4.472825),
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
         'floors_col': 'Title'
     },
@@ -219,4 +177,11 @@ time_agg_dict = {
     'Daily': '1D',
     'Hourly': '1H',
     '15 minutes': '15T'
+}
+
+chart_colours_dict = {
+    'Avg. room temperature (°C)': 'black',
+    'Cooling temperature set point (°C)': 'lightskyblue',
+    'Heating temperature set point (°C)': 'red',
+    'Outside temperature (°C)': 'burlywood'
 }

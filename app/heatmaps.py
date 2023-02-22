@@ -1,23 +1,32 @@
 import plot
 import config as cnf
 import utils
+import times
+from datetime import timedelta
 
 
 def set_params_heatmaps(col1, col2):
     building_param = col1.radio('Select building', cnf.non_test_sites, key='hmaps_building')
     data_param = col1.radio('Select data', [key for key in cnf.data_param_dict.keys() if not key.startswith('_')], key='hmaps_data')
+    min_time = (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
+    max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    time_param = col1.slider('Select date range',
+                             min_value=min_time,
+                             max_value=max_time,
+                             value=(min_time, max_time))
     agg_param = col1.radio('Select average by', cnf.agg_param_dict.keys(), key='hmaps_time')
     raw_data = col2.checkbox("Show raw data", value=False, key="hmaps_raw_data")
-    return building_param, data_param, agg_param, raw_data
+    return building_param, data_param, time_param, agg_param, raw_data
 
 
-def run_plots_heatmaps(df_dict, building_param, data_param, agg_param, col):
+def run_plots_heatmaps(df_dict, building_param, data_param, time_param, agg_param, col):
     building_dict, param_dict, agg_param_dict = utils.get_config_dicts(building_param, data_param, agg_param)
+    t_min, t_max = time_param[0].strftime('%Y-%m-%dT%H:%M:%S'), time_param[1].strftime('%Y-%m-%dT%H:%M:%S')
     for i, (title, df) in enumerate(df_dict.items()):
         plot.plot_heatmap(
-            df=df,
+            df=df[(df.index >= t_min) & (df.index <= t_max)],
             agg_param=agg_param,
-            plot_parms=(param_dict['fmt'], param_dict['vmin'], param_dict['vmax']),
+            fmt=param_dict['fmt'],
             title=title,
             # xlabel=agg_param,
             # ylabel=f'{collect_title}\nrooms' + '\n',
