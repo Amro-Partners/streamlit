@@ -1,12 +1,5 @@
 import config as cnf
-import times
 import streamlit as st
-import firebase_database as fbdb
-import rooms
-import google.cloud.firestore_v1.client as gcc
-import functools as ft
-import pandas as pd
-import numpy as np
 
 
 def format_row_wise(df, formatter):
@@ -33,43 +26,53 @@ def convert_object_cols_to_boolean(df):
     return df
 
 
-@st.experimental_singleton(show_spinner=False)
-def get_config_dicts(building_param, data_param, time_param=None):
+@st.cache_data(show_spinner=False)
+def get_config_dicts(building_param, data_param, agg_param=None):
     building_dict = cnf.sites_dict[building_param]
     param_dict = cnf.data_param_dict[data_param]
-    if time_param:
-        time_param_dict = cnf.time_param_dict[time_param]
-        return building_dict, param_dict, time_param_dict
-    else:
-        return building_dict, param_dict
-
-
-@st.experimental_singleton(show_spinner=False)
-def join_pandas_df_list(dfs_list):
-    return ft.reduce(lambda left, right: left.join(right, how='left'), dfs_list)
-
-
-@st.experimental_singleton(show_spinner=False)
-def get_cooked_df(_db, collect_name, collect_title, building_dict, param_dict, time_param_dict):
-    df_dict = {}
-    df_pd = fbdb.get_firebase_data(_db, collect_name, time_param_dict['start_date_utc'], time_param_dict['end_date_utc'],
-                                   param_dict['field_keyword'], param_dict['match_keyword'])
-
-    if param_dict['is_rooms']:
-        rooms_dict = rooms.get_code_to_room_dict(building_dict['rooms_file'])
-        gateway_room_pattern = building_dict['gateway_reg_express']
-        df_pd = rooms.map_rooms_names(df_pd.copy(), rooms_dict, gateway_room_pattern)
-        floors_order_dict = {k: v for v, k in enumerate(building_dict['floors_order'])}
-        for rooms_title in sorted(set(df_pd.columns.get_level_values(0)),
-                                  key=lambda item: floors_order_dict.get(item, len(floors_order_dict))):
-            condition = df_pd.columns.get_level_values(0) == rooms_title
-            dff = df_pd.loc[:, condition]
-            dff.columns = dff.columns.get_level_values(1)
-            df_dict[collect_title if collect_title else rooms_title] = dff
-    elif collect_title:
-        df_dict[collect_title] = df_pd
-
-    return df_dict
+    agg_param_dict = cnf.agg_param_dict[agg_param]
+    return building_dict, param_dict, agg_param_dict
 
 
 
+@st.cache_data(show_spinner=False)
+def info(duration, test_name, market_based_electricity_cost, location_based_co2):
+    title = 'See how it is calculated'
+    intro = [f'''
+        Pre-experiment calibration results is a summary statistics table comparing the test and control groups over 
+        different metrics over a {duration.days}-day period to ensure that the groups are similar and any 
+        differences in the results can be attributed to the experiment.''',
+             f'''
+        'A/B testing period results is a summary statistics table comparing the test and control groups over 
+        different metrics over the test {duration.days}-day period to measure the 
+        differences in the groups that can be attributed to the experiment.''',
+             f'''
+        Pre/Post A/B testing results is a summary statistics table comparing the trends between the 
+        Pre-experiment calibration period and the A/B testing period 
+        to measure relative changes in the groups that can be attributed to the experiment.''']
+    body = f'''
+        Number of rooms - number of rooms that belong to each group. The rest of the metrics below provide 
+        **{'per-room'}** averages for the rooms that belong to each group over the full period.\n
+        Cooling temperature set point (°C) - avg. AC cooling set point.\n
+        Percentage of A/C usage (%) - average percentage of time that AC is being used.\n
+        Average room electricity consumption (kWh) - approximate average electricity consumption.\n
+        This is calculated as follows:
+        * VRV internal units - Total consumption in KW of floors 1-8 from BMS over 13 days between dates 21.10.2022-02.11.2022.
+        * VRV external units - Total consumption in KW of external VRV units from BMS over 13 days between dates 21.10.2022-02.11.2022
+        * average % AC usage - 40% over 13 days between dates 21.10.2022-02.11.2022
+        * Number of active rooms - 280 occupied rooms (out of a total of 339 rooms in Seville). 
+        multiplied by 85.6%, which is the relative power capacity of the climatization external units for the rooms and clusters.
+        Then the formula is: \n
+        Avg. tenants VRV kW consumption = (VRV internal units + VRV external units) / (#Hours) = 29.88 kW\n
+        Avg. tenants VRV kWh consumption per occupied room per day  = Avg. tenants VRV kWh consumption * 24 / Number of active rooms = 2.58\n
+        Average room electricity consumption (kWh) = Avg. tenants VRV kWh consumption per occupied room per day * duration in days * 
+        Percentage of A/C usage (%) / average % AC usage = 2.58 * duration in days * Percentage of A/C usage (%) / 40%
+        \n
+        Average room electricity cost (€) (ex. VAT) - approximate average electricity cost calculated by 
+        multiplying electricity consumption (kWh) by the market-based cost factor of
+        {market_based_electricity_cost} €/kWh for test "{test_name}".\n
+        Average room carbon footprint (kg CO2) - approximate average carbon footprint (kg CO2) calculated by 
+        multiplying electricity consumption (kWh) by the location-based emission factor of
+        {location_based_co2} kgCO2/kWh for test "{test_name}"
+        '''
+    return title, intro, body

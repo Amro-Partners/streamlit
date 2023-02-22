@@ -1,13 +1,22 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 import streamlit as st
+
+
+def log(*message):
+    print(f'**************** {utc_now()} : {message}')
+
+
+def daterange(start_date, end_date):
+    for n in range(int((end_date - start_date).days)):
+        yield start_date + timedelta(n)
 
 
 def utc_now():
     return datetime.utcnow()
 
 
-@st.experimental_singleton
+@st.cache_data
 def last_cache_date():
     return utc_now().strftime('%Y-%m-%d')
 
