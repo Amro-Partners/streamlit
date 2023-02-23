@@ -3,15 +3,15 @@ import times
 import numpy as np
 
 
-app_version = 1.5
-release_date = '21/10/2022'
+app_version = 2.0
+release_date = '22/02/2023'
 test = True
 
 figure_memory_scale = 0.25  # scaling the original seaborn in order to reduce memory usage
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
 storage_bucket = 'amro-partners.appspot.com'
 
-tabs = ["HEATMAPS", "CHARTS", "EXPERIMENTS"]
+tabs = ["ROOMS HEATMAPS", "ROOMS CHARTS", "CONSUMPTION", "EXPERIMENTS"]
 
 
 '''
@@ -62,13 +62,13 @@ data_param_dict = {
 
 # TODO: we need to localise the start_date and end_date
 agg_param_dict = {
-    "Date (last 7 days)": {
+    "Date": {
         'start_date_utc': (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
         'end_date_utc': (times.utc_now()).replace(hour=0, minute=0, second=0, microsecond=0),
         'aggregation_field_name': 'Date',
         'aggregation_strftime': '%Y-%m-%d\n%A'
     },
-    "Hour of Day (last 7 days)": {
+    "Hour of Day": {
         'start_date_utc': (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
         'end_date_utc': (times.utc_now()).replace(hour=0, minute=0, second=0, microsecond=0),
         'aggregation_field_name': 'Hour',

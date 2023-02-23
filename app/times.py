@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta
-from pytz import timezone
+import pandas as pd
 import streamlit as st
+from datetime import datetime, timedelta
+import pytz
 
 
 def log(*message):
@@ -16,20 +17,24 @@ def utc_now():
     return datetime.utcnow()
 
 
-@st.cache_data
+@st.cache_resource
 def last_cache_date():
     return utc_now().strftime('%Y-%m-%d')
 
 
-def localise_time_now(tz):
-    return timezone('UTC').localize(utc_now()).astimezone(timezone(tz))
+def local_to_utc(timestamp, source_tz, destin_tz):
+    return pytz.timezone(source_tz).localize(timestamp).astimezone(tz=destin_tz)
 
 
-def convert_datetmie_to_string(start_date_utc, end_date_utc):
-    return start_date_utc.strftime('%Y-%m-%dT%H:%M:%S'), end_date_utc.strftime('%Y-%m-%dT%H:%M:%S')
+def convert_datetmie_to_string(date_time):
+    if not isinstance(date_time, str):
+        return date_time.strftime('%Y-%m-%dT%H:%M:%S')
+    else:  # if it's already a string, just return as it is
+        return date_time
 
 
 def change_pd_time_zone(datetime_col, source_tz, destin_tz):
+    # converting source_tz to destin_tz in a pandas column datetime_col
     return datetime_col.tz_localize(source_tz).tz_convert(destin_tz)
 
 
@@ -56,3 +61,15 @@ def log_time(times, key):
 
     times['last'] = now
     return key, times[key]
+
+
+def groupby_date_vars(df, agg_param_dict, to_zone=None):
+
+    datetime_col = pd.to_datetime(df.index, format="%Y-%m-%d %H:%M:%S")
+    if to_zone is not None:
+        datetime_col = change_pd_time_zone(datetime_col, 'UTC', to_zone)
+
+    aggregation_field_name = agg_param_dict['aggregation_field_name']
+    aggregation_strftime = agg_param_dict['aggregation_strftime']
+    df[aggregation_field_name] = datetime_col.strftime(aggregation_strftime)
+    return df.groupby(by=[aggregation_field_name])

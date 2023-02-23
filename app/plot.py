@@ -1,8 +1,8 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-import config as cnf
 import times
+import config as cnf
 from datetime import timedelta
 import streamlit as st
 import altair as alt
@@ -11,21 +11,9 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-def set_date_vars(df, agg_param_dict, to_zone=None):
-
-    datetime_col = pd.to_datetime(df.index, format="%Y-%m-%d %H:%M:%S")
-    if to_zone is not None:
-        datetime_col = times.change_pd_time_zone(datetime_col, 'UTC', to_zone)
-
-    aggregation_field_name = agg_param_dict['aggregation_field_name']
-    aggregation_strftime = agg_param_dict['aggregation_strftime']
-    df[aggregation_field_name] = datetime_col.strftime(aggregation_strftime)
-    return df.groupby(by=[aggregation_field_name]).mean()
-
-
 def plot_heatmap(df, agg_param, fmt, title, to_zone, scale, col):
     agg_param_dict = cnf.agg_param_dict[agg_param]
-    df_agg = set_date_vars(df, agg_param_dict, to_zone=to_zone)
+    df_agg = times.groupby_date_vars(df, agg_param_dict, to_zone=to_zone).mean()
     vmin, vmax = df_agg.min().min(), df_agg.max().max()
     fig = plt.figure(figsize=(scale*24, scale*len(df_agg.columns)))
     sns.set(font_scale=scale*2)
