@@ -1,12 +1,14 @@
 from datetime import timedelta, timezone
 import pandas as pd
 import altair as alt
+import streamlit as st
 from firebase_admin import firestore
 import config as cnf
 import rooms
 import times
 
 
+@st.cache_data(show_spinner=False)
 def set_params_consumpt(col1, col2):
     building_param = col1.radio('Select building', cnf.non_test_sites, key='consump_building')
     min_time = (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -21,7 +23,7 @@ def set_params_consumpt(col1, col2):
     data_param = col1.multiselect('Select data',
                             sorted([key for key in
                                     rooms.read_consumption_codes('consumption_codes_seville.csv').values()]),
-                                  default='Building General', key='consump_data', label_visibility="collapsed")
+                                  default='Building General', key='consump_data')
     return building_param, time_param, agg_param, data_param, raw_data
 
 
