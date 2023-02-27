@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
-import times
+from datetime import datetime
+import pandas as pd
 import numpy as np
 
 
@@ -62,24 +62,38 @@ data_param_dict = {
 
 # TODO: we need to localise the start_date and end_date
 agg_param_dict = {
-    "Date": {
-        'start_date_utc': (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
-        'end_date_utc': (times.utc_now()).replace(hour=0, minute=0, second=0, microsecond=0),
-        'aggregation_field_name': 'Date',
-        'aggregation_strftime': '%Y-%m-%d\n%A'
+    'Heatmaps': {
+        "Date": {
+            'aggregation_field_name': 'Date',
+            'aggregation_strftime': '%Y-%m-%d\n%A'
+        },
+        "Hour of Day": {
+            'aggregation_field_name': "Hour of Day",
+            'aggregation_strftime': '%H'
+        }
     },
-    "Hour of Day": {
-        'start_date_utc': (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
-        'end_date_utc': (times.utc_now()).replace(hour=0, minute=0, second=0, microsecond=0),
-        'aggregation_field_name': 'Hour',
-        'aggregation_strftime': '%H'
-    },
-    # "Latest reading": {
-    #     'start_date_utc': (times.utc_now() - timedelta(minutes=15)),
-    #     'end_date_utc': (times.utc_now()),
-    #     'aggregation_field_name': 'Local time',
-    #     'aggregation_strftime': '%Y-%m-%d %H:%M:%S'
-    # },
+    'Consumption': {
+        "Date": {
+            'aggregation_field_name': 'Date',
+            'aggregation_strftime': '%Y-%m-%d'
+        },
+        "Week": {
+            'aggregation_field_name': 'Week',
+            'aggregation_strftime': '%Y week %W'
+        },
+        "Month": {
+            'aggregation_field_name': 'Month',
+            'aggregation_strftime': '%Y-%m\n%B'
+        },
+        "Day of week": {
+            'aggregation_field_name': 'Day of week',
+            'aggregation_strftime': '%A'
+        },
+        "Hour of Day": {
+            'aggregation_field_name': "Hour of Day",
+            'aggregation_strftime': '%H'
+        },
+    }
 }
 
 

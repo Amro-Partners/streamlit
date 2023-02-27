@@ -27,10 +27,10 @@ def convert_object_cols_to_boolean(df):
 
 
 @st.cache_data(show_spinner=False)
-def get_config_dicts(building_param, data_param, agg_param=None):
+def get_config_dicts(building_param, data_param, agg_param, tab_name):
     building_dict = cnf.sites_dict[building_param]
     param_dict = cnf.data_param_dict[data_param]
-    agg_param_dict = cnf.agg_param_dict[agg_param]
+    agg_param_dict = cnf.agg_param_dict[tab_name][agg_param]
     return building_dict, param_dict, agg_param_dict
 
 

@@ -36,12 +36,12 @@ def set_homepage():
     col41, col42, col43 = tab4.columns([2, 6, 2])
     tab1_building_param, tab1_data_param, tab1_time_param, tab1_agg_param, tab1_raw_data = hmap.set_params_heatmaps(col11, col12)
     tab2_building_param, tab2_floor_param, tab2_room_param, tab2_raw_data = cha.set_params_charts(col21, col22)
-    tab3_building_param, tab3_time_param, tab3_agg_param, tab3_data_param, tab3_raw_data = cons.set_params_consumpt(col31, col32)
+    tab3_building_param, tab3_time_param, tab3_agg_param, tab3_metric_param, tab3_data_param, tab3_raw_data = cons.set_params_consumpt(col31, col32)
     tab4_building_param, tab4_metric_param, tab4_agg_param, tab4_raw_data = exp.set_params_exp(col41, col42)
 
     return (col12, tab1_building_param, tab1_data_param, tab1_time_param, tab1_agg_param,
             col22, tab2_building_param, tab2_floor_param, tab2_room_param,
-            col32, tab3_building_param, tab3_time_param, tab3_agg_param, tab3_data_param, tab3_raw_data,
+            col32, tab3_building_param, tab3_time_param, tab3_agg_param, tab3_metric_param, tab3_data_param, tab3_raw_data,
             col42, tab4_building_param, tab4_metric_param, tab4_agg_param)
 
 
@@ -51,7 +51,7 @@ def main():
 
     (col12, tab1_building_param, tab1_data_param, tab1_time_param, tab1_agg_param,
      col22, tab2_building_param, tab2_floor_param, tab2_room_param,
-     col32, tab3_building_param, tab3_time_param, tab3_agg_param, tab3_data_param, tab3_raw_data,
+     col32, tab3_building_param, tab3_time_param, tab3_agg_param, tab3_metric_param, tab3_data_param, tab3_raw_data,
      col42, tab4_building_param, tab4_metric_param, tab4_agg_param) = set_homepage()  # Get choice of building
 
     # Heatmaps
@@ -88,12 +88,11 @@ def main():
 
     # Consumption
     cons_df = cons.consumption_summary(firestore_client, tab3_building_param, tab3_time_param, tab3_agg_param)
+    cons_df_metric = cons.convert_metric(cons_df.copy(), tab3_metric_param)
     if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
-        col32.dataframe(cons_df, use_container_width=True)
+        col32.dataframe(cons_df_metric, use_container_width=True)
     else:
-        print(tab3_agg_param)
-        print(cons_df[tab3_data_param].reset_index())
-        chart = cons.chart_df(cons_df, tab3_data_param, tab3_agg_param)
+        chart = cons.chart_df(cons_df_metric, tab3_data_param, tab3_agg_param, tab3_metric_param)
         col32.altair_chart(chart.interactive(), use_container_width=True)
 
     # Experiments

@@ -63,12 +63,15 @@ def log_time(times, key):
     return key, times[key]
 
 
-def groupby_date_vars(df, agg_param_dict, to_zone=None):
-
+def change_index_timezone(df, to_zone=None):
     datetime_col = pd.to_datetime(df.index, format="%Y-%m-%d %H:%M:%S")
     if to_zone is not None:
         datetime_col = change_pd_time_zone(datetime_col, 'UTC', to_zone)
+    return datetime_col
 
+
+def groupby_date_vars(df, agg_param_dict, to_zone=None):
+    datetime_col = change_index_timezone(df, to_zone)
     aggregation_field_name = agg_param_dict['aggregation_field_name']
     aggregation_strftime = agg_param_dict['aggregation_strftime']
     df[aggregation_field_name] = datetime_col.strftime(aggregation_strftime)
