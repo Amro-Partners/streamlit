@@ -1,5 +1,6 @@
 from datetime import timedelta, timezone
 import pandas as pd
+import altair as alt
 from firebase_admin import firestore
 import config as cnf
 import rooms
@@ -17,11 +18,14 @@ def set_params_consumpt(col1, col2):
                              key='consump_time')
     agg_param = col1.radio('Select average by', cnf.agg_param_dict.keys(), key='consump_agg')
     raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
-    data_param = col1.radio('Select data', [key for key in rooms.read_consumption_codes('consumption_codes_seville.csv').keys()], key='consump_data')
-    return building_param, time_param, agg_param, raw_data
+    data_param = col1.multiselect('Select data',
+                            sorted([key for key in
+                                    rooms.read_consumption_codes('consumption_codes_seville.csv').values()]),
+                                  default='Building General', key='consump_data', label_visibility="collapsed")
+    return building_param, time_param, agg_param, data_param, raw_data
 
 
-def consumption_summary(db, building_param, time_param, agg_param, raw_data):
+def consumption_summary(db, building_param, time_param, agg_param):
     building_dict = cnf.sites_dict[building_param]
 
     # Choose start date and an end date for the analysis
@@ -56,3 +60,13 @@ def consumption_summary(db, building_param, time_param, agg_param, raw_data):
                                       cnf.agg_param_dict[agg_param],
                                       to_zone=cnf.sites_dict[building_param]['time_zone']).sum()
     return df_diff
+
+
+def chart_df(df, data_param, agg_param):
+    return (alt.Chart(df[data_param].reset_index().melt(agg_param), title='Consumption in kWh').mark_line().encode(
+        x=alt.X(agg_param, axis=alt.Axis(title='', tickColor='white', grid=False, domain=False, labelAngle=0)),
+        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
+        color=alt.Color('variable',
+                        legend=alt.Legend(labelFontSize=14, direction='vertical', titleAnchor='middle',
+                                          orient="right", title=''))))
+
