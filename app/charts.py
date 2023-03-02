@@ -16,6 +16,7 @@ def set_params_charts(col1, col2):
 
 def run_flow_charts(df, _col):  #(db, building_param, floor_param, room_param, col):
     df = df.sort_index()
+    df = df.drop(columns=['Cooling temperature set point (°C)'])
     max_datetime = df.index[-1]
     if st.session_state.chart_raw_data:
         _col.dataframe(df, use_container_width=True)

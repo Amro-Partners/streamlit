@@ -68,9 +68,10 @@ def charts(df, _max_datetime):
     df = df[xvars]
 
     df = df.reset_index().melt('Time')
-    chart = (alt.Chart(df.loc[df['Time'] <= _max_datetime]).mark_line().encode(
-        x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
+    chart = (alt.Chart(df.loc[df['Time'] <= _max_datetime],
+                       title='Control of room temperature: Automatic resetting of heating setpoint').mark_line().encode(
+        x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False)),
+        y=alt.Y('value', axis=alt.Axis(title='Temperature (°C)', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=alt.Color('variable',
                         legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
                                           orient='bottom', title=''),
@@ -78,20 +79,20 @@ def charts(df, _max_datetime):
                         )
     ))
 
-    pred_chart = (alt.Chart(df.loc[df['Time'] >= _max_datetime]).mark_line(strokeDash=[1, 1]).encode(
-        x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False)),
-        color=alt.Color('variable',
-                        legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
-                                          orient='bottom', title=''),
-                        scale=alt.Scale(domain=xvars, range=range_)
-                        )
-    ))
+    # pred_chart = (alt.Chart(df.loc[df['Time'] >= _max_datetime]).mark_line(strokeDash=[1, 1]).encode(
+    #     x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False)),
+    #     y=alt.Y('value', axis=alt.Axis(title='Temperature (°C)', tickColor='white', domain=False)),
+    #     color=alt.Color('variable',
+    #                     legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
+    #                                       orient='bottom', title=''),
+    #                     scale=alt.Scale(domain=xvars, range=range_)
+    #                     )
+    # ))
 
     rect = alt.Chart(df_on_off_times).mark_rect().mark_rect(opacity=0.2).encode(
         x='start_on_times:T',
         x2='end_on_times:T'
     )
-    ch_lay = alt.layer(chart, pred_chart, rect).configure_view(strokeWidth=0)
+    ch_lay = alt.layer(chart, rect).configure_view(strokeWidth=0)  # alt.layer(chart, pred_chart, rect).configure_view(strokeWidth=0)
 
     return ch_lay

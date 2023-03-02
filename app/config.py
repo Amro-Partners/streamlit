@@ -28,12 +28,12 @@ data_param_dict = {
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
         'fmt': '.1f'
     },
-    "Cooling temperature set point (°C)": {
-        'is_rooms': True,
-        'field_keyword': ['SetTempCool'],
-        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f'
-    },
+    # "Cooling temperature set point (°C)": {
+    #     'is_rooms': True,
+    #     'field_keyword': ['SetTempCool'],
+    #     'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
+    #     'fmt': '.1f'
+    # },
     "Heating temperature set point (°C)": {
         'is_rooms': True,
         'field_keyword': ['SetTempHeat'],
@@ -98,29 +98,29 @@ agg_param_dict = {
 
 
 sites_dict = {
-    "Amro Seville fan speed pilot CL01": {
-        'time_zone': 'Europe/Madrid',
-        'rooms_file': "rooms_codes_seville_CL01_exp.csv",
-        'floors_order': ['Control',
-                         'Test'],
-        'floors_col': 'Group',
-        'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2023, 2, 28, 12, 0),
-        'calibration_days': 7,
-        'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.136
-    },
+    # "Amro Seville fan speed pilot CL01": {
+    #     'time_zone': 'Europe/Madrid',
+    #     'rooms_file': "rooms_codes_seville_CL01_exp.csv",
+    #     'floors_order': ['Control',
+    #                      'Test'],
+    #     'floors_col': 'Group',
+    #     'start_exp_date_utc': datetime(2022, 12, 1, 0, 0),
+    #     'end_exp_date_utc': datetime(2023, 12, 11, 0, 0),
+    #     'calibration_days': 7,
+    #     'market_based_electricity_cost': 0.370,
+    #     'location_based_co2': 0.259
+    # },
     "Amro Seville ventilation temp pilot CL02": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_seville_CL02_exp.csv",
         'floors_order': ['Control',
                          'Test'],
         'floors_col': 'Group',
-        'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2022, 12, 28, 12, 0),
-        'calibration_days': 7,
+        'start_exp_date_utc': datetime(2022, 11, 29, 0, 0),
+        'end_exp_date_utc': datetime(2022, 12, 18, 0, 0),
+        'calibration_days': 4,
         'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.136
+        'location_based_co2': 0.259
     },
     "Amro Seville": {
         'time_zone': 'Europe/Madrid',

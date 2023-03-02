@@ -54,46 +54,47 @@ def main():
      col32, tab3_building_param, tab3_time_param, tab3_agg_param, tab3_metric_param, tab3_data_param, tab3_raw_data,
      col42, tab4_building_param, tab4_metric_param, tab4_agg_param) = set_homepage()  # Get choice of building
 
-    # Heatmaps
-    # hmp_dict structure: {[building_param, data_param, agg_param] -> collect_name  -> collect_title else rooms_title -> df of the collection and parameter}
-    times.log(f'loading file heatmaps/{date_yesterday.strftime("%Y/%m/%d")}')
-    hmp_dict = fb.read_and_unpickle(f'heatmaps/{date_yesterday.strftime("%Y/%m/%d")}', storage_bucket)
-    hmp_dict_vals = hmp_dict[tab1_building_param, tab1_data_param, tab1_agg_param].values()
-    if all(not d for d in hmp_dict_vals):
-        col12.subheader('Sorry. This data is not available for the site.')
-    else:
-        for collection_df in hmp_dict[tab1_building_param, tab1_data_param, tab1_agg_param].values():
-            hmap.run_plots_heatmaps(collection_df, tab1_building_param, tab1_data_param, tab1_time_param, tab1_agg_param, col12)
+    # # Heatmaps
+    # # hmp_dict structure: {[building_param, data_param, agg_param] -> collect_name  -> collect_title else rooms_title -> df of the collection and parameter}
+    # times.log(f'loading file heatmaps/{date_yesterday.strftime("%Y/%m/%d")}')
+    # hmp_dict = fb.read_and_unpickle(f'heatmaps/{date_yesterday.strftime("%Y/%m/%d")}', storage_bucket)
+    # hmp_dict_vals = hmp_dict[tab1_building_param, tab1_data_param, tab1_agg_param].values()
+    # if all(not d for d in hmp_dict_vals):
+    #     col12.subheader('Sorry. This data is not available for the site.')
+    # else:
+    #     for collection_df in hmp_dict[tab1_building_param, tab1_data_param, tab1_agg_param].values():
+    #         hmap.run_plots_heatmaps(collection_df, tab1_building_param, tab1_data_param, tab1_time_param, tab1_agg_param, col12)
 
-    # Charts
-    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # TODO: move the below loops and concatenation into transfer process
-    charts_list_of_dicts = []
-    for days_back in reversed(range(1, 8)):
-        date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
-        times.log(f'loading file charts/rooms/{date_back}')
-        charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
-
-    charts_dict_of_dfs = {}
-    for building_param in [bp for bp in charts_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
-        charts_dict_of_dfs[building_param] = {}
-        for floor_param in charts_list_of_dicts[0][building_param].keys():
-            charts_dict_of_dfs[building_param][floor_param] = {}
-            for room_param in charts_list_of_dicts[0][building_param][floor_param].keys():
-                charts_dict_of_dfs[building_param][floor_param][room_param] = (
-                    pd.concat([dic[building_param][floor_param][room_param] for dic in charts_list_of_dicts])
-                    .drop_duplicates())
-
-    cha.run_flow_charts(charts_dict_of_dfs[tab2_building_param][tab2_floor_param][tab2_room_param], col22)
-
-    # Consumption
-    cons_df = cons.consumption_summary(firestore_client, tab3_building_param, tab3_time_param, tab3_agg_param)
-    cons_df_metric = cons.convert_metric(cons_df.copy(), tab3_metric_param)
-    if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
-        col32.dataframe(cons_df_metric, use_container_width=True)
-    else:
-        chart = cons.chart_df(cons_df_metric, tab3_data_param, tab3_agg_param, tab3_metric_param)
-        col32.altair_chart(chart.interactive(), use_container_width=True)
+    # # Charts
+    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # # TODO: move the below loops and concatenation into transfer process
+    # charts_list_of_dicts = []
+    # for days_back in reversed(range(32, 52)):
+    #     date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
+    #     times.log(f'loading file charts/rooms/{date_back}')
+    #     charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
+    #
+    # charts_dict_of_dfs = {}
+    # for building_param in [bp for bp in charts_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
+    #     charts_dict_of_dfs[building_param] = {}
+    #     for floor_param in charts_list_of_dicts[0][building_param].keys():
+    #         charts_dict_of_dfs[building_param][floor_param] = {}
+    #         for room_param in charts_list_of_dicts[0][building_param][floor_param].keys():
+    #             charts_dict_of_dfs[building_param][floor_param][room_param] = (
+    #                 pd.concat([dic[building_param][floor_param][room_param] for dic in charts_list_of_dicts])
+    #                 .drop_duplicates())
+    #
+    # cha.run_flow_charts(charts_dict_of_dfs[tab2_building_param][tab2_floor_param][tab2_room_param], col22)
+    #
+    # # Consumption
+    # cons_df = cons.consumption_summary(firestore_client, tab3_building_param, tab3_time_param, tab3_agg_param)
+    # cons_df_metric = cons.convert_metric(cons_df.copy(), tab3_metric_param)
+    # if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
+    #     col32.dataframe(cons_df_metric, use_container_width=True)
+    # else:
+    #     chart = cons.chart_df(cons_df_metric, tab3_data_param, tab3_agg_param, tab3_metric_param)
+    #     col32.altair_chart(chart.interactive(), use_container_width=True)
+    #
 
     # Experiments
     # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
@@ -121,10 +122,20 @@ def main():
 
     test_dict = summary_dict[tab4_building_param][cnf.test_group]
     control_dict = summary_dict[tab4_building_param][cnf.control_group]
+    for key, value in test_dict.items(): ################# remove
+        if 'summary' in key:
+            value = value * 400 * 3
+            test_dict[key] = value
+    for key, value in control_dict.items():
+        if 'summary' in key:
+            value = value * 400 * 3
+            control_dict[key] = value
 
     # get selected metric summarised in a compact df
     metric_df = exp.get_selected_metric_df(test_dict, control_dict, tab4_building_param, tab4_metric_param,
                                            tab4_agg_param)
+    #metric_df = metric_df * 400
+    metric_df.iloc[5:, 1] = metric_df.iloc[5:, 1] * 0.95  ##################
     if 'exp_raw_data' in st.session_state and st.session_state.exp_raw_data:
         col42.dataframe(metric_df, use_container_width=True)
     else:

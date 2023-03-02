@@ -193,6 +193,8 @@ def show_summary_tables(_test_dict, _control_dict, _col, building_param):
     _col.subheader('Pre/Post A/B testing results' )
     _col.table(utils.format_row_wise(summary_df_pre_post, cnf.formatters2))
     _col.expander(title, expanded=False).write(f'{intro[2]}\n{body}')
+    _col.text("")
+    _col.text("")
 
 
 @st.cache_data(show_spinner=False)
@@ -207,13 +209,14 @@ def get_selected_metric_df(_test_dict, _control_dict, building_param, metric_par
 
 
 def chart_df(metric_df, building_param, metric_param):
+    metric_df = metric_df # / 10782  ##########################
     range_ = ['red', 'black']
     metric_df.columns = [c.split('_')[-1] for c in metric_df.columns]
     domain = [c.split('_')[-1] for c in metric_df.columns]
 
-    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=metric_param).mark_line().encode(
-        x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
+    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title='Controlled experiment of AHU incoming temperature: Comparison of Test and Control groups').mark_line().encode(
+        x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False)),
+        y=alt.Y('value', axis=alt.Axis(title='HVAC electricity consumption\n(kWh)', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=alt.Color('variable',
                         legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
                                           orient='bottom', title=''),
