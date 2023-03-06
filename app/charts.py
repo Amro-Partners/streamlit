@@ -4,7 +4,7 @@ import streamlit as st
 import plot
 
 
-def set_params_charts(col1, col2):
+def set_params_room_charts(col1, col2):
     building_param = col1.radio('Select building', cnf.non_test_sites, key='chart_building')
     building_dict = cnf.sites_dict[building_param]
     floor_param = col1.radio('Select floor', building_dict['floors_order'], key='chart_floor')
@@ -14,8 +14,10 @@ def set_params_charts(col1, col2):
     return building_param, floor_param, room_param, raw_data
 
 
-def run_flow_charts(df, _col):  #(db, building_param, floor_param, room_param, col):
+def run_flow_charts(df, _col):
     df = df.sort_index()
+    # TODO: add setpoint mode to transfer and then drop the one that is not active
+    df = df.drop(columns=['Cooling temperature set point (°C)'])
     max_datetime = df.index[-1]
     if st.session_state.chart_raw_data:
         _col.dataframe(df, use_container_width=True)

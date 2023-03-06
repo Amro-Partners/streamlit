@@ -11,7 +11,7 @@ figure_memory_scale = 0.25  # scaling the original seaborn in order to reduce me
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
 storage_bucket = 'amro-partners.appspot.com'
 
-tabs = ["ROOMS HEATMAPS", "ROOMS CHARTS", "CONSUMPTION", "EXPERIMENTS"]
+tabs = ["ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "CONSUMPTION", "EXPERIMENTS"]
 
 
 '''
@@ -108,7 +108,7 @@ sites_dict = {
         'end_exp_date_utc': datetime(2023, 2, 28, 12, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.136
+        'location_based_co2': 0.259
     },
     "Amro Seville ventilation temp pilot CL02": {
         'time_zone': 'Europe/Madrid',
@@ -120,7 +120,7 @@ sites_dict = {
         'end_exp_date_utc': datetime(2022, 12, 28, 12, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.136
+        'location_based_co2': 0.259
     },
     "Amro Seville": {
         'time_zone': 'Europe/Madrid',

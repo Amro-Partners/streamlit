@@ -211,9 +211,9 @@ def chart_df(metric_df, building_param, metric_param):
     metric_df.columns = [c.split('_')[-1] for c in metric_df.columns]
     domain = [c.split('_')[-1] for c in metric_df.columns]
 
-    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=metric_param).mark_line().encode(
-        x=alt.X('Time', axis=alt.Axis(title='', formatType="time", tickColor='white', grid=False, domain=False)),
-        y=alt.Y('value', axis=alt.Axis(title='', tickColor='white', domain=False), scale=alt.Scale(zero=False)),
+    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=f'{building_param}: Comparison of Test and Control groups').mark_line().encode(
+        x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False)),
+        y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=alt.Color('variable',
                         legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
                                           orient='bottom', title=''),
