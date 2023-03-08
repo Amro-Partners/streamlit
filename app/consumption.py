@@ -8,19 +8,23 @@ import rooms
 import times
 
 
-def set_params_consumpt(col1, col2):
+def set_params_consumpt(col1, col2, col3):
     building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
-    min_time = (times.utc_now() - timedelta(days=30)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    min_time = (times.utc_now() - timedelta(days=60)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=15, second=0, microsecond=0)
     time_param = col1.slider('Select date range',
                              min_value=min_time,
                              max_value=max_time,
                              value=(min_time, max_time),
                              key='consump_time')
-    metric_param = col1.radio('Select metric', ['Elect. consumption (kWh)', 'Floor area elect. consumption (kWh/m2)',
-                                                'GHG emission (kgCO2e)', 'GHG emission intensity (kgCO2e/m2)'], key='consump_metric')
-    data_param_list = (['Total floors 1-8', 'Total clusters', 'Total floors S', 'Total floor B', 'Total VRV internal rooms fans',
-     'Total Climatization', 'Total VRV external units', 'Total AHU', 'Total thermal stores', 'HVAC energy consumption']
+    metric_param = col1.radio('Select metric',
+                              ['Elect. consumption (kWh)', 'Floor area elect. consumption (kWh/m2)',
+                               'Per bed elect. consumption (kWh)', 'GHG emission (kgCO2e)',
+                               'GHG emission intensity (kgCO2e/m2)', 'Per bed GHG emission (kgCO2e)'],
+                              key='consump_metric')
+    data_param_list = (['Floors 1-8', 'AHUs', 'Climatization', 'Floor S', 'Floor B', 'Thermal stores', 'Clusters',
+                        'In-rooms VRV fans', 'External VRV units', 'In-rooms external VRV units',
+                        'Total in-rooms', 'HVAC energy consumption']
                        + sorted([key for key in rooms.read_consumption_codes('consumption_codes_seville.csv').values()]))
 
     agg_param = col1.radio('Group by', cnf.agg_param_dict['Consumption'].keys(), key='consump_agg')
@@ -62,21 +66,23 @@ def consumption_summary(_db, building_param, time_param, agg_param):
             new_cols += [col]
     df.columns = new_cols
 
-    df['Total floors 1-8'] = (df['Floor 1 total'] + df['Floor 2 total'] + df['Floor 3 total'] + df['Floor 4 total']
+    df['Floors 1-8'] = (df['Floor 1 total'] + df['Floor 2 total'] + df['Floor 3 total'] + df['Floor 4 total']
                               + df['Floor 5 total'] + df['Floor 6 total'] + df['Floor 7 total'] + df['Floor 8 total'])
-    df['Total AHU'] = df['Floor 9 CL01']  + df['Floor 9 CL02'] + df['Floor 9 CL03']
-    df['Total Climatization'] = df['Floor 9 Climatization']
-    df['Total floors S'] = (df['Floor S Laundry'] + df['Floor S generator set'] + df['Floor S Lift 1']
+    df['AHUs'] = df['Floor 9 CL01'] + df['Floor 9 CL02'] + df['Floor 9 CL03']
+    df['Climatization'] = df['Floor 9 Climatization']
+    df['Floor S'] = (df['Floor S Laundry'] + df['Floor S generator set'] + df['Floor S Lift 1']
                             + df['Floor S Lift 1'] + df['Floor S Lift 2'] + df['Floor S Lift 3'] + df['Floor S Lift 4'])
-    df['Total floor B'] = (df['Floor B Lobby'] + df['Floor B Cefeteria'] + df['Floor B Cookers'] + df['Floor B Kitchen'])
-    df['Total thermal stores'] = df['Floor 9 QTON themral store'] + df['Floor 9 Aerotermia themral store']
-    df['Total clusters'] = (df['Floor 1 Cluster 1'] + df['Floor 1 Cluster 2'] + df['Floor 2 Cluster 1'] + df['Floor 2 Cluster 2']
+    df['Floor B'] = (df['Floor B Lobby'] + df['Floor B Cefeteria'] + df['Floor B Cookers'] + df['Floor B Kitchen'])
+    df['Thermal stores'] = df['Floor 9 QTON themral store'] + df['Floor 9 Aerotermia themral store']
+    df['Clusters'] = (df['Floor 1 Cluster 1'] + df['Floor 1 Cluster 2'] + df['Floor 2 Cluster 1'] + df['Floor 2 Cluster 2']
                             + df['Floor 3 Cluster 1'] + df['Floor 3 Cluster 2'] + df['Floor 4 Cluster 1'] + df['Floor 4 Cluster 2']
                             + df['Floor 5 Cluster 1'] + df['Floor 5 Cluster 2'] + df['Floor 6 Cluster 1'] + df['Floor 6 Cluster 2']
                             + df['Floor 7 Cluster 1'] + df['Floor 7 Cluster 2'] + df['Floor 8 Cluster 1'] + df['Floor 8 Cluster 2'])
-    df['Total VRV internal rooms fans'] = df['Total floors 1-8'] - df['Total clusters']
-    df['Total VRV external units'] = df['Total Climatization'] - df['Total thermal stores'] - df['Total AHU']
-    df['HVAC energy consumption'] = df['Total AHU'] + df['Total VRV internal rooms fans'] + df['Total VRV external units']
+    df['In-rooms VRV fans'] = df['Floors 1-8'] - df['Clusters']
+    df['External VRV units'] = df['Climatization'] - df['Thermal stores'] - df['AHUs']
+    df['In-rooms external VRV units'] = df['External VRV units'] * (0.555 + 0.301)
+    df['Total in-rooms'] = df['In-rooms VRV fans'] + df['External VRV units']
+    df['HVAC energy consumption'] = df['AHUs'] + df['In-rooms VRV fans'] + df['External VRV units']
 
     df = df.reindex(sorted(df.columns), axis=1)
 
@@ -106,12 +112,18 @@ def add_temp(_db, t_min, t_max, time_zone, agg_param):
 
 @st.cache_data(show_spinner=False)
 def convert_metric(df, metric_param):
-    for col in df.columns:
-        if 'temperature' not in col:
-            df[col] = df[col] * 0.259
-    for col in df.columns:
-        if 'temperature' not in col:
-            df[col] = df[col] / 10782
+    if 'kgCO2e' in metric_param:
+        for col in df.columns:
+            if 'temperature' not in col:
+                df[col] = df[col] * 0.259
+    if '/m2' in metric_param:
+        for col in df.columns:
+            if 'temperature' not in col:
+                df[col] = df[col] / 10782
+    if 'Per bed' in metric_param:
+        for col in df.columns:
+            if 'temperature' not in col:
+                df[col] = df[col] / 339
     return df
 
 

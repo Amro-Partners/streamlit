@@ -1,6 +1,6 @@
 from datetime import datetime
-import pandas as pd
 import numpy as np
+import times
 
 
 app_version = 2.0
@@ -105,7 +105,7 @@ sites_dict = {
                          'Test'],
         'floors_col': 'Group',
         'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2023, 2, 28, 12, 0),
+        'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -117,7 +117,7 @@ sites_dict = {
                          'Test'],
         'floors_col': 'Group',
         'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),
-        'end_exp_date_utc': datetime(2022, 12, 28, 12, 0),
+        'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -125,14 +125,24 @@ sites_dict = {
     "Amro Seville": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_seville.csv",
+        'vent_file': 'vent_codes_seville.csv',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3", "Planta 4",
                          "Planta 5", "Planta 6", "Planta 7", "Planta 8", "Planta 9"],
+        'AHU_units': ['CL01', 'CL02', 'CL03'],
+        'rooms_chart_cols': [('temperature', 'Ventilation temperature set point (°C)'),
+                             ('Ventilation rate supply', 'Ventilation rate return'),
+                           'Percentage of A/C usage (%)'],
+        'AHU_chart_cols': [('temperature', 'Ventilation temperature set point (°C)'),
+                           ('Ventilation rate supply', 'Ventilation rate return'),
+                           'Ventilation usage (%)'],
         'floors_col': 'Title'
     },
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
+        'vent_file': '',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
+        'AHU_units': [], # ['CL01', 'CL02', 'CL03'],
         'floors_col': 'Title'
     },
 }
@@ -197,5 +207,9 @@ chart_colours_dict = {
     'Avg. room temperature (°C)': 'black',
     'Cooling temperature set point (°C)': 'lightskyblue',
     'Heating temperature set point (°C)': 'red',
-    'Outside temperature (°C)': 'burlywood'
+    'Outside temperature (°C)': 'burlywood',
+    'temperature': 'black',
+    'Ventilation temperature set point (°C)': 'lightskyblue',
+    'Ventilation rate supply': 'peru',
+    'Ventilation rate return': 'burlywood'
 }
