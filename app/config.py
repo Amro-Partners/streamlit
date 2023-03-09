@@ -116,7 +116,7 @@ sites_dict = {
         'floors_order': ['Control',
                          'Test'],
         'floors_col': 'Group',
-        'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),  #(times.utc_now() - timedelta(days=7)),  #
+        'start_exp_date_utc': datetime(2022, 11, 29, 0, 0),  #(times.utc_now() - timedelta(days=7)),  #
         'end_exp_date_utc': times.utc_now(),
         'calibration_days': 2,
         'market_based_electricity_cost': 0.370,
