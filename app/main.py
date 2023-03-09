@@ -105,7 +105,8 @@ def main():
                     .drop_duplicates())
 
     cha.run_flow_charts(charts_dict_of_dfs[tab_rooms_charts_building_param][tab_rooms_charts_floor_param][tab_rooms_charts_room_param],
-                        st.session_state.chart_raw_data, col2_rooms_charts)
+                        st.session_state.chart_rooms_raw_data,
+                        cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
 
     # AHU charts
     # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}

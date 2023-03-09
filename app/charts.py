@@ -1,6 +1,5 @@
 import rooms
 import config as cnf
-import streamlit as st
 import plot
 
 
