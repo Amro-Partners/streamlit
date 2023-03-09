@@ -96,7 +96,7 @@ def consumption_summary(_db, building_param, time_param, agg_param):
     return df_diff
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_resource(show_spinner=False)
 def add_temp(_db, t_min, t_max, time_zone, agg_param):
     doc_outdoor_temp = (_db.collection(u'weather_Seville')
            .where('datetime', '>=', t_min).where('datetime', '<', t_max).

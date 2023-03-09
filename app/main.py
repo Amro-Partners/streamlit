@@ -53,7 +53,7 @@ def set_homepage():
     (tab_consumpt_building_param, tab_consumpt_time_param, 
      tab_consumpt_agg_param, tab_consumpt_metric_param, 
      tab_consumpt_data_param, tab_consumpt_raw_data) = cons.set_params_consumpt(col1_consumpt, col2_consumpt, col3_consumpt)
-    
+
     (tab_exper_building_param, tab_exper_metric_param, 
      tab_exper_agg_param, tab_exper_raw_data) = exp.set_params_exp(col1_exper, col2_exper)
 
@@ -88,11 +88,18 @@ def main():
     # Room charts
     # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
     # TODO: move the below loops and concatenation into transfer process
-    charts_list_of_dicts = []
-    for days_back in reversed(range(1, 29)):
-        date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
-        times.log(f'loading file charts/rooms/{date_back}')
-        charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
+
+    #charts_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
+    charts_list_of_dicts = utils.read_files_in_loop('charts/rooms/',
+                                                     (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                     (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                     storage_bucket)
+
+    # charts_list_of_dicts = []
+    # for days_back in reversed(range(1, 29)):
+    #     date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
+    #     times.log(f'loading file charts/rooms/{date_back}')
+    #     charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
 
     charts_dict_of_dfs = {}
     for building_param in [bp for bp in charts_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
@@ -111,11 +118,18 @@ def main():
     # AHU charts
     # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
     # TODO: move the below loops and concatenation into transfer process
-    ahu_list_of_dicts = []
-    for days_back in reversed(range(1, 29)):
-        date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
-        times.log(f'loading file charts/ahu/{date_back}')
-        ahu_list_of_dicts.append(fb.read_and_unpickle(f'charts/ahu/{date_back}', storage_bucket))
+
+    #ahu_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/ahu/', 29, storage_bucket)
+    ahu_list_of_dicts = utils.read_files_in_loop('charts/ahu/',
+                                                  (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                  (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                  storage_bucket)
+
+    # ahu_list_of_dicts = []
+    # for days_back in reversed(range(1, 29)):
+    #     date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
+    #     times.log(f'loading file charts/ahu/{date_back}')
+    #     ahu_list_of_dicts.append(fb.read_and_unpickle(f'charts/ahu/{date_back}', storage_bucket))
 
     charts_dict_of_dfs = {}
     for building_param in [bp for bp in ahu_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
@@ -146,10 +160,12 @@ def main():
     start_date = (cnf.sites_dict[tab_exper_building_param]['start_exp_date_utc']
                   - timedelta(days=cnf.sites_dict[tab_exper_building_param]['calibration_days']))
     end_date = min(date_yesterday, cnf.sites_dict[tab_exper_building_param]['end_exp_date_utc'])
-    exp_list_of_dicts = []
-    for date in times.daterange(start_date, end_date):
-        times.log(f'loading file experiments/rooms/{date.strftime("%Y/%m/%d")}')
-        exp_list_of_dicts.append(fb.read_and_unpickle(f'experiments/rooms/{date.strftime("%Y/%m/%d")}', storage_bucket))
+
+    exp_list_of_dicts = utils.read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
+    # exp_list_of_dicts = []
+    # for date in times.daterange(start_date, end_date):
+    #     times.log(f'loading file experiments/rooms/{date.strftime("%Y/%m/%d")}')
+    #     exp_list_of_dicts.append(fb.read_and_unpickle(f'experiments/rooms/{date.strftime("%Y/%m/%d")}', storage_bucket))
 
     summary_dict = exp.get_summary_dict(exp_list_of_dicts)
     test_dict = summary_dict[tab_exper_building_param][cnf.test_group]
