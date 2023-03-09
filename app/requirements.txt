@@ -12,3 +12,4 @@ streamlit_autorefresh
 altair
 #logging
 #sklearn
+statsmodels

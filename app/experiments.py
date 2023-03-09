@@ -1,5 +1,8 @@
 import rooms
 import pandas as pd
+import numpy as np
+from statsmodels.tsa.stattools import acovf
+from scipy.stats import t
 from datetime import timedelta
 import times
 import config as cnf
@@ -11,30 +14,10 @@ from pytz import timezone
 
 def set_params_exp(col1, col2):
     building_param = col1.radio('Select Flight', cnf.test_sites, key='exp_building')
-    building_dict = cnf.sites_dict[building_param]
     metric_param = col1.radio('Select chart metric',  cnf.metrics, key='exp_chart_metric')
     agg_param = col1.radio('Select chart frequency',  cnf.time_agg_dict.keys(), key='exp_chart_freq')
     raw_data = col2.checkbox("Show raw data", value=False, key="exp_raw_data")
     return building_param, metric_param, agg_param, raw_data
-
-
-
-@st.cache_data(show_spinner=False)
-def sim_df_dict(building_param, _df_dict_room, _start_exp_date_utc, _groups=[], _funcs=[]):
-    building_dict = cnf.sites_dict[building_param]
-    floor_to_rooms_dict = rooms.get_floor_to_rooms_dict(building_dict['rooms_file'], building_dict['floors_col'])
-    for group, func in zip(_groups, _funcs):
-        for floor_param in building_dict['floors_order']:
-            if floor_param in group:
-                for room_param in floor_to_rooms_dict[floor_param]:
-                    _start_exp_date_utc = _start_exp_date_utc.astimezone(timezone(building_dict['time_zone']))
-                    df = _df_dict_room[floor_param][room_param]
-                    df1 = df.loc[lambda df: df.index < _start_exp_date_utc]
-                    df2 = df.loc[lambda df: df.index >= _start_exp_date_utc]
-
-                    _df_dict_room[floor_param][room_param] = pd.concat([df1, func(df2, 5, building_dict)])
-
-    return _df_dict_room
 
 
 def avg_all_rooms(df_dict_room, floor_to_rooms_dict):
@@ -47,11 +30,29 @@ def avg_all_rooms(df_dict_room, floor_to_rooms_dict):
 
 def get_exp_metrics(df_sum, flight_duration, building_dict):
     df_sum = df_sum.loc[:, [c for c in df_sum.columns if 'Outside temperature' not in c]]
+    # TODO: improve this formula
     df_sum[cnf.elect_consump_name] = ((2.58 / 0.4 / (24 * 4)) * flight_duration.days
                                       * df_sum[cnf.ac_usage_name])
     df_sum[cnf.elect_cost_name] = building_dict['market_based_electricity_cost'] * df_sum[cnf.elect_consump_name]
     df_sum[cnf.elect_carbon_name] = building_dict['location_based_co2'] * df_sum[cnf.elect_consump_name]
     return df_sum
+
+
+@st.cache_data(show_spinner=False)
+def get_summary_dict(exp_list_of_dicts):
+    exp_dict_of_dfs = {}
+    summary_dict = {}
+    for building_param in [bp for bp in exp_list_of_dicts[0].keys() if bp in cnf.test_sites]:
+        exp_dict_of_dfs[building_param] = {}
+        for floor_param in exp_list_of_dicts[0][building_param].keys():
+            exp_dict_of_dfs[building_param][floor_param] = {}
+            for room_param in exp_list_of_dicts[0][building_param][floor_param].keys():
+                exp_dict_of_dfs[building_param][floor_param][room_param] = (
+                    pd.concat([dic[building_param][floor_param][room_param]
+                               for dic in exp_list_of_dicts]).drop_duplicates())
+
+        summary_dict[building_param] = get_exp_summary_dict(building_param, exp_dict_of_dfs[building_param])
+    return summary_dict
 
 
 @st.cache_data(show_spinner=False)
@@ -61,7 +62,7 @@ def get_exp_summary_dict(building_param, _df_dict_room):
     summary_dict = {}
 
     # TODO: flight_duration is currently used also for calculations in add_exp_metrics, but otherwise it is not needed
-    flight_duration = min(building_dict['end_exp_date_utc'], times.utc_now()) - building_dict['start_exp_date_utc']
+    flight_duration = building_dict['end_exp_date_utc'] - building_dict['start_exp_date_utc']
 
     for floor_param in building_dict['floors_order']:
         df_sum = avg_all_rooms(_df_dict_room[floor_param], floor_to_rooms_dict[floor_param])
@@ -92,13 +93,6 @@ def _se_group_series_relative(pre_dict, post_dict):
     return pre_dict.sem() + post_dict.sem()
 
 
-def _groups_stats_absolute(test_dict, cont_dict):
-    avg_test = _avg_group_series(test_dict)
-    avg_cont = _avg_group_series(cont_dict)
-    diff = avg_test - avg_cont
-    se = _se_group_series_absolute(test_dict, cont_dict)
-    return avg_test, avg_cont, diff, se
-
 
 def _groups_stats_relative(pre_dict, post_dict):
     pre_avg = _avg_group_series(pre_dict)
@@ -110,13 +104,50 @@ def _groups_stats_relative(pre_dict, post_dict):
 
 @st.cache_data(show_spinner=False)
 def get_exp_summary_df(test_dict, control_dict):
-    avg_test, avg_cont, diff, se = _groups_stats_absolute(test_dict, control_dict)
+    avg_test, avg_cont, diff = _groups_stats_absolute(test_dict, control_dict)
     df_sum = pd.concat([avg_test, avg_cont], axis=1)
     df_sum.columns = [cnf.test_group, cnf.control_group]
     df_sum['Difference'] = diff
-    df_sum['95%  C.I.'] = list(zip(diff - 10*se, diff + 10*se))
+    df_sum['95%  C.I.'] = test(test_dict, control_dict)
     return df_sum
 
+def _groups_stats_absolute(test_dict, cont_dict):
+    avg_test = _avg_group_series(test_dict)
+    avg_cont = _avg_group_series(cont_dict)
+    diff = avg_test - avg_cont
+    #se = _se_group_series_absolute(test_dict, cont_dict)
+    return avg_test, avg_cont, diff#, se
+
+
+def test(df1, df2, lags=100, alpha=0.05):
+    CI_dict = {}
+    for col in df1.columns:
+        ts1, ts2 = df1[col], df2[col]
+        # Compute the difference time series
+        diff_ts = ts1 - ts2
+
+        # Compute the sample mean and variance of the difference time series
+        mean_diff = np.mean(diff_ts)
+        var_diff = np.var(diff_ts, ddof=1)
+
+        acovf_diff = acovf(diff_ts, nlag=lags, fft=False, adjusted=True)
+
+        # Estimate the Newey-West standard error of the mean difference
+        nw_se = np.sqrt((var_diff / len(diff_ts)) + 2 * np.sum(
+            [(1 - i / (lags + 1)) * acovf_diff[i] / len(diff_ts) for i in range(1, lags + 1)]))
+
+        # Compute the confidence interval for the mean difference
+
+        df = len(diff_ts) - lags
+        t_crit = t.ppf(1 - alpha / 2, df)
+
+        # Compute the confidence interval for the mean difference
+        ci_low = mean_diff - t_crit * nw_se
+        ci_high = mean_diff + t_crit * nw_se
+
+        CI_dict[col] = (ci_low, ci_high)  # f'({ci_low:.4f}, {ci_high:.4f})'
+
+    return pd.Series(CI_dict)
 
 @st.cache_data(show_spinner=False)
 def get_exp_times(building_param):
@@ -127,16 +158,16 @@ def get_exp_times(building_param):
     return start_calibration_date_utc, start_exp_date_utc, end_exp_date_utc
 
 
-@st.cache_data(show_spinner=False)
-def get_exp_comparison_df(test_pre_dict, test_dict_post_dict, cont_pre_dict, contpost_dict):
-    _, _, test_diff, test_se = _groups_stats_relative(test_pre_dict, test_dict_post_dict)
-    _, _, cont_diff, cont_se = _groups_stats_relative(cont_pre_dict, contpost_dict)
-    df_sum = pd.concat([test_diff, cont_diff], axis=1)
-    df_sum.columns = [cnf.test_group, cnf.control_group]
-    diff = test_diff - cont_diff
-    df_sum['Difference'] = diff
-    df_sum['95%  C.I.'] = list(zip(diff - 10*(test_se+cont_se), diff + 10*(test_se+cont_se)))
-    return df_sum
+# @st.cache_data(show_spinner=False)
+# def get_exp_comparison_df(test_pre_dict, test_dict_post_dict, cont_pre_dict, contpost_dict):
+#     _, _, test_diff, test_se = _groups_stats_relative(test_pre_dict, test_dict_post_dict)
+#     _, _, cont_diff, cont_se = _groups_stats_relative(cont_pre_dict, contpost_dict)
+#     df_sum = pd.concat([test_diff, cont_diff], axis=1)
+#     df_sum.columns = [cnf.test_group, cnf.control_group]
+#     diff = test_diff - cont_diff
+#     df_sum['Difference'] = diff
+#     df_sum['95%  C.I.'] = list(zip(diff - 10*(test_se+cont_se), diff + 10*(test_se+cont_se)))
+#     return df_sum
 
 
 def show_summary_tables(_test_dict, _control_dict, _col, building_param):
@@ -157,32 +188,31 @@ def show_summary_tables(_test_dict, _control_dict, _col, building_param):
     summary_df_post = get_exp_summary_df(_test_dict[cnf.avg_post_df_name],
                                              _control_dict[cnf.avg_post_df_name])
     # The rest of the metrics post vs. pre starting the experiment
-    summary_df_pre_post = get_exp_comparison_df(_test_dict[cnf.avg_pre_df_name],
-                                                _test_dict[cnf.avg_post_df_name],
-                                                _control_dict[cnf.avg_pre_df_name],
-                                                _control_dict[cnf.avg_post_df_name])
+    # summary_df_pre_post = get_exp_comparison_df(_test_dict[cnf.avg_pre_df_name],
+    #                                             _test_dict[cnf.avg_post_df_name],
+    #                                             _control_dict[cnf.avg_pre_df_name],
+    #                                             _control_dict[cnf.avg_post_df_name])
 
     summary_df_pre = pd.concat([first_row, summary_df_pre])
     summary_df_post = pd.concat([first_row, summary_df_post])
-    summary_df_pre_post = pd.concat([first_row, summary_df_pre_post])
+    # summary_df_pre_post = pd.concat([first_row, summary_df_pre_post])
 
-    title, intro, body = utils.info(flight_duration_pre,
-                                    building_param,
-                                    building_dict['market_based_electricity_cost'],
-                                    building_dict['location_based_co2'])
+    # title, intro, body = utils.info(flight_duration_pre,
+    #                                 building_param,
+    #                                 building_dict['market_based_electricity_cost'],
+    #                                 building_dict['location_based_co2'])
 
-    _col.subheader('Pre-experiment calibration results')
+    _col.subheader('Pre-experiment calibration period')
     _col.text(f'Pre-experiment calibration duration: {start_calibration_date_utc} - {start_exp_date_utc} '
               f'({flight_duration_pre.days} days) ')
     _col.table(utils.format_row_wise(summary_df_pre, cnf.formatters))
-    _col.expander(title, expanded=False).write(f'{intro[0]}\n{body}')
 
     title, intro, body = utils.info(flight_duration_post,
                                     building_param,
                                     building_dict['market_based_electricity_cost'],
                                     building_dict['location_based_co2'])
 
-    _col.subheader('A/B testing period results')
+    _col.subheader('A/B testing period')
     _col.text(f'Flight duration: {start_exp_date_utc} - {end_exp_date_utc} '
               f'({flight_duration_post.days} days '
               f'{flight_duration_post.seconds // 3600} hours '
@@ -190,9 +220,9 @@ def show_summary_tables(_test_dict, _control_dict, _col, building_param):
     _col.table(utils.format_row_wise(summary_df_post, cnf.formatters))
     _col.expander(title, expanded=False).write(f'{intro[1]}\n{body}')
 
-    _col.subheader('Pre/Post A/B testing results' )
-    _col.table(utils.format_row_wise(summary_df_pre_post, cnf.formatters2))
-    _col.expander(title, expanded=False).write(f'{intro[2]}\n{body}')
+    # _col.subheader('Pre/Post A/B testing period')
+    # _col.table(utils.format_row_wise(summary_df_pre_post, cnf.formatters2))
+    # _col.expander(title, expanded=False).write(f'{intro[2]}\n{body}')
 
 
 @st.cache_data(show_spinner=False)
