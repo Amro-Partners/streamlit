@@ -1,5 +1,8 @@
 import config as cnf
+import times
 import streamlit as st
+from datetime import timedelta
+import firebase as fb
 
 
 def format_row_wise(df, formatter):
@@ -33,6 +36,24 @@ def get_config_dicts(building_param, data_param, agg_param, tab_name):
     agg_param_dict = cnf.agg_param_dict[tab_name][agg_param]
     return building_dict, param_dict, agg_param_dict
 
+
+@st.cache_data(show_spinner=False)
+def read_files_in_loop(yesterday, file_prefix, max_days_back, _storage_bucket):
+    list_of_data = []
+    for days_back in reversed(range(1, max_days_back)):
+        date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
+        times.log(f'loading file {file_prefix}{date_back}')
+        list_of_data.append(fb.read_and_unpickle(f'{file_prefix}{date_back}', _storage_bucket))
+    return list_of_data
+
+
+@st.cache_data(show_spinner=False)
+def read_files_in_loop2(file_prefix, start_date, end_date, _storage_bucket):
+    list_of_data = []
+    for date in times.daterange(start_date, end_date):
+        times.log(f'loading file {file_prefix}{date.strftime("%Y/%m/%d")}')
+        list_of_data.append(fb.read_and_unpickle(f'{file_prefix}{date.strftime("%Y/%m/%d")}', _storage_bucket))
+    return list_of_data
 
 
 @st.cache_data(show_spinner=False)

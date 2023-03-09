@@ -133,7 +133,7 @@ sites_dict = {
                              (), 'Percentage of A/C usage (%)'],
         'AHU_chart_cols': [('temperature', 'Ventilation temperature set point (°C)'),
                            ('Ventilation rate supply', 'Ventilation rate return'),
-                           'Ventilation usage (%)'],
+                           'Supply Running'],
         'floors_col': 'Title'
     },
     "Amro Malaga": {
