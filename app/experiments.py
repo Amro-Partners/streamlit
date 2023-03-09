@@ -120,6 +120,7 @@ def _groups_stats_absolute(test_dict, cont_dict):
 
 
 def test(df1, df2, lags=100, alpha=0.05):
+    # Newey–West-based estimator for C.I.
     CI_dict = {}
     for col in df1.columns:
         ts1, ts2 = df1[col], df2[col]
