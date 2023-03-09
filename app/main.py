@@ -90,7 +90,7 @@ def main():
     # TODO: move the below loops and concatenation into transfer process
 
     #charts_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
-    charts_list_of_dicts = utils.read_files_in_loop2('charts/rooms/',
+    charts_list_of_dicts = utils.read_files_in_loop('charts/rooms/',
                                                      (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      storage_bucket)
@@ -120,7 +120,7 @@ def main():
     # TODO: move the below loops and concatenation into transfer process
 
     #ahu_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/ahu/', 29, storage_bucket)
-    ahu_list_of_dicts = utils.read_files_in_loop2('charts/ahu/',
+    ahu_list_of_dicts = utils.read_files_in_loop('charts/ahu/',
                                                   (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   storage_bucket)
@@ -161,7 +161,7 @@ def main():
                   - timedelta(days=cnf.sites_dict[tab_exper_building_param]['calibration_days']))
     end_date = min(date_yesterday, cnf.sites_dict[tab_exper_building_param]['end_exp_date_utc'])
 
-    exp_list_of_dicts = utils.read_files_in_loop2('experiments/rooms/', start_date, end_date, storage_bucket)
+    exp_list_of_dicts = utils.read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
     # exp_list_of_dicts = []
     # for date in times.daterange(start_date, end_date):
     #     times.log(f'loading file experiments/rooms/{date.strftime("%Y/%m/%d")}')
