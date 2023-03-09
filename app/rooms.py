@@ -10,6 +10,12 @@ def read_consumption_codes(consumption_codes_file):
 
 
 @st.cache_data(show_spinner=False)
+def get_ahu_dict(ahu_codes_file):
+    path = os.path.dirname(__file__)
+    return pd.read_csv(os.path.join(path, ahu_codes_file), encoding='latin-1').set_index('Title')['UNIT'].to_dict()
+
+
+@st.cache_data(show_spinner=False)
 def read_room_file(rooms_mapping_file):
     path = os.path.dirname(__file__)
     return pd.read_csv(os.path.join(path, rooms_mapping_file), encoding='latin-1')

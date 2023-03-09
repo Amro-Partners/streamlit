@@ -39,5 +39,5 @@ AmS_CCPLS_1.AnRedCafe_kWh_Tot,Floor B Cefeteria
 AmS_CCPLS_1.AnRedGim_kWh_Tot,Floor 9 Gym
 AmS_CCPLS_1.AnRedLav_kWh_Tot,Floor S Laundry
 AmS_CCPLS_1.AnRedLobby_kWh_Tot,Floor B Lobby
-AmS_CCPLS_1.ARed_Grupo_EnergActiva,Floor S generator set 
-AmS_CCPLS_1.ARed_Red_EnergActiva,Total Building
+AmS_CCPLS_1.ARed_Grupo_EnergActiva,Floor S generator set
+AmS_CCPLS_1.ARed_Red_EnergActiva,Building energy consumption
