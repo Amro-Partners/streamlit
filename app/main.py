@@ -91,7 +91,7 @@ def main():
 
     #charts_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
     charts_list_of_dicts = utils.read_files_in_loop('charts/rooms/',
-                                                     (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                     (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      storage_bucket)
 
@@ -121,7 +121,7 @@ def main():
 
     #ahu_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/ahu/', 29, storage_bucket)
     ahu_list_of_dicts = utils.read_files_in_loop('charts/ahu/',
-                                                  (times.utc_now() - timedelta(days=29)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                  (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   storage_bucket)
 
