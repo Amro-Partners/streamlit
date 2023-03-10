@@ -64,6 +64,15 @@ def set_homepage():
             col2_exper, tab_exper_building_param, tab_exper_metric_param, tab_exper_agg_param)
 
 
+@st.cache_data(show_spinner=False)
+def read_files_in_loop(file_prefix, start_date, end_date, _storage_bucket):
+    list_of_data = []
+    for date in times.daterange(start_date, end_date):
+        times.log(f'loading file {file_prefix}{date.strftime("%Y/%m/%d")}')
+        list_of_data.append(fb.read_and_unpickle(f'{file_prefix}{date.strftime("%Y/%m/%d")}', _storage_bucket))
+    return list_of_data
+
+
 def main():
     date_yesterday = (times.utc_now() - timedelta(days=1))
     firestore_client, storage_bucket = fb.get_db_from_firebase_key(cnf.storage_bucket)
@@ -89,29 +98,30 @@ def main():
     # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
     # TODO: move the below loops and concatenation into transfer process
 
-    #charts_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
-    charts_list_of_dicts = utils.read_files_in_loop('charts/rooms/',
+    #rooms_list_of_dicts = read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
+    rooms_list_of_dicts = read_files_in_loop('charts/rooms/',
                                                      (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      storage_bucket)
 
-    # charts_list_of_dicts = []
+    # rooms_list_of_dicts = []
     # for days_back in reversed(range(1, 29)):
     #     date_back = (times.utc_now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
     #     times.log(f'loading file charts/rooms/{date_back}')
-    #     charts_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
+    #     rooms_list_of_dicts.append(fb.read_and_unpickle(f'charts/rooms/{date_back}', storage_bucket))
 
-    charts_dict_of_dfs = {}
-    for building_param in [bp for bp in charts_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
-        charts_dict_of_dfs[building_param] = {}
-        for floor_param in charts_list_of_dicts[0][building_param].keys():
-            charts_dict_of_dfs[building_param][floor_param] = {}
-            for room_param in charts_list_of_dicts[0][building_param][floor_param].keys():
-                charts_dict_of_dfs[building_param][floor_param][room_param] = (
-                    pd.concat([dic[building_param][floor_param][room_param] for dic in charts_list_of_dicts])
-                    .drop_duplicates())
+    # rooms_dict_of_dfs = {}
+    # for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
+    #     rooms_dict_of_dfs[building_param] = {}
+    #     for floor_param in rooms_list_of_dicts[0][building_param].keys():
+    #         rooms_dict_of_dfs[building_param][floor_param] = {}
+    #         for room_param in rooms_list_of_dicts[0][building_param][floor_param].keys():
+    #             rooms_dict_of_dfs[building_param][floor_param][room_param] = (
+    #                 pd.concat([dic[building_param][floor_param][room_param] for dic in rooms_list_of_dicts])
+    #                 .drop_duplicates())
+    rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts)
 
-    cha.run_flow_charts(charts_dict_of_dfs[tab_rooms_charts_building_param][tab_rooms_charts_floor_param][tab_rooms_charts_room_param],
+    cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_building_param][tab_rooms_charts_floor_param][tab_rooms_charts_room_param],
                         st.session_state.chart_rooms_raw_data,
                         cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
 
@@ -119,8 +129,8 @@ def main():
     # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
     # TODO: move the below loops and concatenation into transfer process
 
-    #ahu_list_of_dicts = utils.read_files_in_loop(date_yesterday, 'charts/ahu/', 29, storage_bucket)
-    ahu_list_of_dicts = utils.read_files_in_loop('charts/ahu/',
+    #ahu_list_of_dicts = read_files_in_loop(date_yesterday, 'charts/ahu/', 29, storage_bucket)
+    ahu_list_of_dicts = read_files_in_loop('charts/ahu/',
                                                   (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   storage_bucket)
@@ -131,16 +141,17 @@ def main():
     #     times.log(f'loading file charts/ahu/{date_back}')
     #     ahu_list_of_dicts.append(fb.read_and_unpickle(f'charts/ahu/{date_back}', storage_bucket))
 
-    charts_dict_of_dfs = {}
-    for building_param in [bp for bp in ahu_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
-        charts_dict_of_dfs[building_param] = {}
-        for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
-            charts_dict_of_dfs[building_param][ahu_unit] = (
-                    pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
-                    .drop_duplicates())
+    # ahu_dict_of_dfs = {}
+    # for building_param in [bp for bp in ahu_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
+    #     ahu_dict_of_dfs[building_param] = {}
+    #     for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
+    #         ahu_dict_of_dfs[building_param][ahu_unit] = (
+    #                 pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
+    #                 .drop_duplicates())
+    ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts)
 
 
-    cha.run_flow_charts(charts_dict_of_dfs[tab_ahu_charts_building_param][tab_ahu_charts_ahu_param],
+    cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_building_param][tab_ahu_charts_ahu_param],
                         st.session_state.chart_ahu_raw_data,
                         cnf.sites_dict[tab_ahu_charts_building_param]['AHU_chart_cols'], col2_AHU_charts)
 
@@ -161,7 +172,7 @@ def main():
                   - timedelta(days=cnf.sites_dict[tab_exper_building_param]['calibration_days']))
     end_date = min(date_yesterday, cnf.sites_dict[tab_exper_building_param]['end_exp_date_utc'])
 
-    exp_list_of_dicts = utils.read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
+    exp_list_of_dicts = read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
     # exp_list_of_dicts = []
     # for date in times.daterange(start_date, end_date):
     #     times.log(f'loading file experiments/rooms/{date.strftime("%Y/%m/%d")}')

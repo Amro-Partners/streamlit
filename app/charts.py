@@ -1,6 +1,10 @@
 import rooms
 import config as cnf
 import plot
+import times
+import firebase as fb
+import streamlit as st
+import pandas as pd
 
 
 def set_params_room_charts(col1, col2):
@@ -32,3 +36,29 @@ def run_flow_charts(df, session_state_raw_data, chart_cols, _col):
         _col.dataframe(df, use_container_width=True)
     else:
         _col.altair_chart(plot.charts(df, max_datetime, chart_cols).interactive(), use_container_width=True)
+
+
+@st.cache_data(show_spinner=False)
+def get_ahu_dict_of_dfs(ahu_list_of_dicts):
+    charts_dict_of_dfs = {}
+    for building_param in [bp for bp in ahu_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
+        charts_dict_of_dfs[building_param] = {}
+        for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
+            charts_dict_of_dfs[building_param][ahu_unit] = (
+                    pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
+                    .drop_duplicates())
+    return charts_dict_of_dfs
+
+
+@st.cache_data(show_spinner=False)
+def get_rooms_dict_of_dfs(rooms_list_of_dicts):
+    rooms_dict_of_dfs = {}
+    for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.non_test_sites]:
+        rooms_dict_of_dfs[building_param] = {}
+        for floor_param in rooms_list_of_dicts[0][building_param].keys():
+            rooms_dict_of_dfs[building_param][floor_param] = {}
+            for room_param in rooms_list_of_dicts[0][building_param][floor_param].keys():
+                rooms_dict_of_dfs[building_param][floor_param][room_param] = (
+                    pd.concat([dic[building_param][floor_param][room_param] for dic in rooms_list_of_dicts])
+                    .drop_duplicates())
+    return rooms_dict_of_dfs

@@ -1,8 +1,5 @@
 import config as cnf
-import times
 import streamlit as st
-from datetime import timedelta
-import firebase as fb
 
 
 def format_row_wise(df, formatter):
@@ -35,15 +32,6 @@ def get_config_dicts(building_param, data_param, agg_param, tab_name):
     param_dict = cnf.data_param_dict[data_param]
     agg_param_dict = cnf.agg_param_dict[tab_name][agg_param]
     return building_dict, param_dict, agg_param_dict
-
-
-@st.cache_data(show_spinner=False)
-def read_files_in_loop(file_prefix, start_date, end_date, _storage_bucket):
-    list_of_data = []
-    for date in times.daterange(start_date, end_date):
-        times.log(f'loading file {file_prefix}{date.strftime("%Y/%m/%d")}')
-        list_of_data.append(fb.read_and_unpickle(f'{file_prefix}{date.strftime("%Y/%m/%d")}', _storage_bucket))
-    return list_of_data
 
 
 @st.cache_data(show_spinner=False)
@@ -87,3 +75,4 @@ def info(duration, test_name, market_based_electricity_cost, location_based_co2)
         {location_based_co2} kgCO2/kWh for test "{test_name}"
         '''
     return title, intro, body
+
