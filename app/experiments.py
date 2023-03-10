@@ -111,6 +111,7 @@ def get_exp_summary_df(test_dict, control_dict):
     df_sum['95%  C.I.'] = test(test_dict, control_dict)
     return df_sum
 
+
 def _groups_stats_absolute(test_dict, cont_dict):
     avg_test = _avg_group_series(test_dict)
     avg_cont = _avg_group_series(cont_dict)
@@ -149,6 +150,7 @@ def test(df1, df2, lags=100, alpha=0.05):
         CI_dict[col] = (ci_low, ci_high)  # f'({ci_low:.4f}, {ci_high:.4f})'
 
     return pd.Series(CI_dict)
+
 
 @st.cache_data(show_spinner=False)
 def get_exp_times(building_param):
