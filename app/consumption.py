@@ -10,7 +10,7 @@ import times
 
 def set_params_consumpt(col1, col2, col3):
     building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
-    min_time = (times.utc_now() - timedelta(days=60)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    min_time = (times.utc_now() - timedelta(days=30)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=15, second=0, microsecond=0)
     time_param = col1.slider('Select date range',
                              min_value=min_time,
