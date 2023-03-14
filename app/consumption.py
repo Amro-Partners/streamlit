@@ -10,7 +10,7 @@ import times
 
 def set_params_consumpt(col1, col2, col3):
     building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
-    min_time = (times.utc_now() - timedelta(days=30)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    min_time = (times.utc_now() - timedelta(days=60)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=15, second=0, microsecond=0)
     time_param = col1.slider('Select date range',
                              min_value=min_time,
@@ -34,20 +34,16 @@ def set_params_consumpt(col1, col2, col3):
 
 
 @st.cache_data(show_spinner=False)
-def consumption_summary(_db, building_param, time_param, agg_param):
-    building_dict = cnf.sites_dict[building_param]
-
-    # Choose start date and an end date for the analysis
-    t_min = times.convert_datetmie_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
-    t_max = times.convert_datetmie_to_string(times.local_to_utc(time_param[1] + timedelta(days=1), building_dict['time_zone'], timezone.utc))
-
+def pull_consumption_data(_db, building_param, t_min, t_max):
     doc_consumpt = (_db.collection(u'BMS_Seville_Consumos_Electricidad2')
            .where('datetime', '>=', t_min).where('datetime', '<', t_max).
            order_by('datetime', direction=firestore.Query.ASCENDING)).stream()
 
     # print the difference in Kwh to get actual electricity consumption
     df = pd.DataFrame([s.to_dict() for s in doc_consumpt]).set_index('datetime')
-    df.index = pd.to_datetime(df.index).round('15min')
+    df.index = pd.to_datetime(df.index)
+    df = df.groupby(pd.Grouper(freq='D')).max()
+    #df.index = pd.to_datetime(df.index).round('15min')
 
     # remove unnecessary fields
     drop_cols = []
@@ -85,12 +81,23 @@ def consumption_summary(_db, building_param, time_param, agg_param):
     df['HVAC energy consumption'] = df['AHUs'] + df['In-rooms VRV fans'] + df['External VRV units']
 
     df = df.reindex(sorted(df.columns), axis=1)
-
-    time_zone = cnf.sites_dict[building_param]['time_zone']
     df_diff = df.diff().round(decimals=2).shift(-1).iloc[:-1]
+    return df_diff
+
+
+@st.cache_data(show_spinner=False)
+def consumption_summary(_db, building_param, time_param, agg_param):
+    building_dict = cnf.sites_dict[building_param]
+
+    # Choose start date and an end date for the analysis
+    t_min = times.convert_datetime_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
+    t_max = times.convert_datetime_to_string(times.local_to_utc(time_param[1] + timedelta(days=1), building_dict['time_zone'], timezone.utc))
+
+    df_diff = pull_consumption_data(_db, building_param, t_min, t_max)
+    time_zone = cnf.sites_dict[building_param]['time_zone']
     df_diff = times.groupby_date_vars(df_diff,
                                           cnf.agg_param_dict['Consumption'][agg_param],
-                                          to_zone=time_zone).sum()
+                                          to_zone=time_zone).agg(cnf.agg_param_dict['Consumption'][agg_param]['agg_func'])
 
     df_diff = df_diff.join(add_temp(_db, t_min, t_max, time_zone, agg_param))
     return df_diff
@@ -102,11 +109,14 @@ def add_temp(_db, t_min, t_max, time_zone, agg_param):
            .where('datetime', '>=', t_min).where('datetime', '<', t_max).
            order_by('datetime', direction=firestore.Query.ASCENDING)).stream()
     df_temp = pd.DataFrame([s.to_dict() for s in doc_outdoor_temp]).set_index('datetime')[['temperature']]
-    df_temp.index = pd.to_datetime(df_temp.index).round('15min')
-    df_temp = times.groupby_date_vars(df_temp,
-                                          cnf.agg_param_dict['Consumption'][agg_param],
-                                          to_zone=time_zone).mean()
+    #df_temp.index = pd.to_datetime(df_temp.index).round('15min')
+    df_temp.index = pd.to_datetime(df_temp.index)
+    df_temp = df_temp.groupby(pd.Grouper(freq='D')).max()
+    df_temp['target'] = 6 * 10782 * 12 / 365  # 6kwh/m2 is our monthly target for Seville - the other const are for calibrating to daily total consumption
+    df_temp = times.groupby_date_vars(df_temp, cnf.agg_param_dict['Consumption'][agg_param])\
+        .agg({'temperature': 'mean', 'target': cnf.agg_param_dict['Consumption'][agg_param]['agg_func']})
     df_temp = df_temp.rename(columns={'temperature': 'outdoor temperature'})
+
     return df_temp
 
 
@@ -128,18 +138,28 @@ def convert_metric(df, metric_param):
 
 
 def chart_df(df, data_param, agg_param, metric_param):
+    color = alt.Color('variable',
+                      legend=alt.Legend(labelFontSize=14, direction='vertical', titleAnchor='middle',
+                                        orient="right", title=''))
+
+
     chart = (alt.Chart(df[data_param].reset_index().melt(agg_param),
                        title=f'Comparison of {metric_param} with outdoor temperature').mark_line().encode(
         x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
-        color=alt.Color('variable',
-                        legend=alt.Legend(labelFontSize=14, direction='vertical', titleAnchor='middle',
-                                          orient="right", title=''))))
+        color=color))
+
+    if 'Building energy consumption' in data_param:
+        # Target line chart
+        target_line = (alt.Chart(df['target'].reset_index().melt(agg_param))
+                             .mark_line(strokeDash=[10, 10])
+                             .encode(x=alt.X(agg_param, title='Date'),
+                                     y=alt.Y('value'),
+                                     color=color))
+        chart += target_line
 
     temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(strokeDash=[1, 1]).encode(
         x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value', axis=alt.Axis(title='Outdoor temperature (°C)', tickColor='white', domain=False, titleAngle=-90), scale=alt.Scale(zero=False)),
-        color=alt.Color('variable',
-                        legend=alt.Legend(labelFontSize=14, direction='vertical', titleAnchor='middle',
-                                          orient="right", title=''))))
+        color=color))
     return alt.layer(chart, temp_line).resolve_scale(y='independent')

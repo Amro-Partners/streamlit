@@ -22,8 +22,8 @@ def set_params_heatmaps(col1, col2):
 
 def run_plots_heatmaps(df_dict, building_param, data_param, time_param, agg_param, col):
     building_dict, param_dict, agg_param_dict = utils.get_config_dicts(building_param, data_param, agg_param, 'Heatmaps')
-    t_min = times.convert_datetmie_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
-    t_max = times.convert_datetmie_to_string(times.local_to_utc(time_param[1] + timedelta(days=1), building_dict['time_zone'], timezone.utc))
+    t_min = times.convert_datetime_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
+    t_max = times.convert_datetime_to_string(times.local_to_utc(time_param[1] + timedelta(days=1), building_dict['time_zone'], timezone.utc))
 
     for i, (title, df) in enumerate(df_dict.items()):
         plot.plot_heatmap(
