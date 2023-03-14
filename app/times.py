@@ -26,7 +26,7 @@ def local_to_utc(timestamp, source_tz, destin_tz):
     return pytz.timezone(source_tz).localize(timestamp).astimezone(tz=destin_tz)
 
 
-def convert_datetmie_to_string(date_time):
+def convert_datetime_to_string(date_time):
     if not isinstance(date_time, str):
         return date_time.strftime('%Y-%m-%dT%H:%M:%S')
     else:  # if it's already a string, just return as it is

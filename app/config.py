@@ -75,24 +75,30 @@ agg_param_dict = {
     'Consumption': {
         "Date": {
             'aggregation_field_name': 'Date',
-            'aggregation_strftime': '%Y-%m-%d'
+            'aggregation_strftime': '%Y-%m-%d',
+            'agg_func': 'sum'
         },
         "Week": {
             'aggregation_field_name': 'Week',
-            'aggregation_strftime': '%Y week %W'
+            'aggregation_strftime': '%Y week %W',
+            'agg_func': 'sum'
         },
         "Month": {
             'aggregation_field_name': 'Month',
-            'aggregation_strftime': '%Y-%m\n%B'
+            'aggregation_strftime': '%Y-%m\n%B',
+            'agg_func': 'sum'
         },
         "Day of week": {
             'aggregation_field_name': 'Day of week',
-            'aggregation_strftime': '%A'
+            'aggregation_strftime': '%A',
+            'agg_func': 'mean'
         },
-        "Hour of Day": {
-            'aggregation_field_name': "Hour of Day",
-            'aggregation_strftime': '%H'
-        },
+        # TODO: bring Hour of Day back once we enable 15 minutes data reads for consumption
+        # "Hour of Day": {
+        #     'aggregation_field_name': "Hour of Day",
+        #     'aggregation_strftime': '%H',
+        #     'agg_func': mean()
+        # },
     }
 }
 
