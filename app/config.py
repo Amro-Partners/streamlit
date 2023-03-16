@@ -29,7 +29,7 @@ sites_dict = {
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
-        'vent_file': '',
+        'vent_file': 'vent_codes_seville.csv',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
         'AHU_units': [], # ['CL01', 'CL02', 'CL03'],
         'floors_col': 'Title'

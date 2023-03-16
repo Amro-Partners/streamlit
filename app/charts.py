@@ -16,7 +16,8 @@ def set_params_room_charts(col1, col2):
 
 
 def set_params_ahu_charts(col1, col2):
-    building_param = col1.radio('Select building', cnf.sites_dict, key='ahu_building')
+    # TODO: reenable Malaga in building_param
+    building_param = col1.radio('Select building', {'Amro Seville': cnf.sites_dict['Amro Seville']}, key='ahu_building')
     building_dict = cnf.sites_dict[building_param]
     ahu_dict = rooms.get_ahu_dict(building_dict['vent_file'])
     ahu_param = col1.radio('Select AHU unit', ahu_dict.keys(), key='ahu_room')
@@ -37,26 +38,24 @@ def run_flow_charts(df, session_state_raw_data, chart_cols, _col):
 
 
 @st.cache_data(show_spinner=False)
-def get_ahu_dict_of_dfs(ahu_list_of_dicts):
+def get_ahu_dict_of_dfs(ahu_list_of_dicts, building_param):
     charts_dict_of_dfs = {}
-    for building_param in [bp for bp in ahu_list_of_dicts[0].keys() if bp in cnf.sites_dict]:
-        charts_dict_of_dfs[building_param] = {}
-        for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
-            charts_dict_of_dfs[building_param][ahu_unit] = (
-                    pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
-                    .drop_duplicates())
+    for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
+        charts_dict_of_dfs[ahu_unit] = (
+                pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
+                .drop_duplicates())
     return charts_dict_of_dfs
 
 
 @st.cache_data(show_spinner=False)
-def get_rooms_dict_of_dfs(rooms_list_of_dicts):
+def get_rooms_dict_of_dfs(rooms_list_of_dicts, building_param, floor_param):
     rooms_dict_of_dfs = {}
-    for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.sites_dict]:
-        rooms_dict_of_dfs[building_param] = {}
-        for floor_param in rooms_list_of_dicts[0][building_param].keys():
-            rooms_dict_of_dfs[building_param][floor_param] = {}
-            for room_param in rooms_list_of_dicts[0][building_param][floor_param].keys():
-                rooms_dict_of_dfs[building_param][floor_param][room_param] = (
-                    pd.concat([dic[building_param][floor_param][room_param] for dic in rooms_list_of_dicts])
-                    .drop_duplicates())
+    # for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.sites_dict]:
+    #     rooms_dict_of_dfs[building_param] = {}
+    #     for floor_param in rooms_list_of_dicts[0][building_param].keys():
+    #         rooms_dict_of_dfs[building_param][floor_param] = {}
+    for room_param in rooms_list_of_dicts[0][building_param][floor_param].keys():
+        rooms_dict_of_dfs[room_param] = (
+            pd.concat([dic[building_param][floor_param][room_param] for dic in rooms_list_of_dicts])
+            .drop_duplicates())
     return rooms_dict_of_dfs

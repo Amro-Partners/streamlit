@@ -35,7 +35,9 @@ def set_homepage():
 
     _line_space([st], [1])
     tabs = st.tabs(cnf.tabs)
-    tab_consumpt, tab_rooms_hmaps, tab_rooms_charts, tab_AHU_charts, tab_exper, _, _ = tabs
+    tab_consumpt, tab_rooms_hmaps, tab_rooms_charts, tab_AHU_charts, tab_exper, tab_occup, tab_water = tabs
+    tab_occup.header("This page is not ready yet.")
+    tab_water.header("This page is not ready yet.")
     _line_space(tabs, [3] * len(tabs))
     
     col1_rooms_hmaps, _, col2_rooms_hmaps, _ = tab_rooms_hmaps.columns(cnf.tabs_space)
@@ -119,8 +121,8 @@ def main():
                                                      (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                      storage_bucket)
 
-    rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts)
-    cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_building_param][tab_rooms_charts_floor_param][tab_rooms_charts_room_param],
+    rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param)
+    cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_room_param],
                         st.session_state.chart_rooms_raw_data,
                         cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
 
@@ -132,8 +134,8 @@ def main():
                                                   (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
                                                   storage_bucket)
 
-    ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts)
-    cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_building_param][tab_ahu_charts_ahu_param],
+    ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts, tab_ahu_charts_building_param)
+    cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_ahu_param],
                         st.session_state.chart_ahu_raw_data,
                         cnf.sites_dict[tab_ahu_charts_building_param]['AHU_chart_cols'], col2_AHU_charts)
 
