@@ -155,7 +155,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': datetime(2022, 12, 8, 0, 0),  # times.utc_now(),
+        'end_exp_date_utc': datetime(2022, 12, 31, 0, 0),  # times.utc_now(),
         'calibration_days': 5,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -166,7 +166,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2022, 11, 29, 0, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': datetime(2022, 12, 8, 0, 0),  # times.utc_now(),
+        'end_exp_date_utc': datetime(2022, 12, 31, 0, 0),  # times.utc_now(),
         'calibration_days': 5,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
