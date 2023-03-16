@@ -8,7 +8,7 @@ import rooms
 import times
 
 
-def set_params_consumpt(col1, col2, col3):
+def set_params_consumpt(col1, col2):
     building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
     min_time = (times.utc_now() - timedelta(days=60)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=15, second=0, microsecond=0)
@@ -24,10 +24,10 @@ def set_params_consumpt(col1, col2, col3):
                               key='consump_metric')
     data_param_list = (['Floors 1-8', 'AHUs', 'Climatization', 'Floor S', 'Floor B', 'Thermal stores', 'Clusters',
                         'In-rooms VRV fans', 'External VRV units', 'In-rooms external VRV units',
-                        'Total in-rooms', 'HVAC energy consumption']
+                        'Total in-rooms VRV', 'HVAC energy consumption']
                        + sorted([key for key in rooms.read_consumption_codes('consumption_codes_seville.csv').values()]))
 
-    agg_param = col1.radio('Group by', cnf.agg_param_dict['Consumption'].keys(), key='consump_agg')
+    agg_param = col1.radio('Group by', cnf.consumpt_agg_param_dict.keys(), key='consump_agg')
     raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
     data_param = col1.multiselect('Select data', data_param_list, default='Building energy consumption', key='consump_data')
     return building_param, time_param, agg_param, metric_param, data_param, raw_data
@@ -77,7 +77,7 @@ def pull_consumption_data(_db, building_param, t_min, t_max):
     df['In-rooms VRV fans'] = df['Floors 1-8'] - df['Clusters']
     df['External VRV units'] = df['Climatization'] - df['Thermal stores'] - df['AHUs']
     df['In-rooms external VRV units'] = df['External VRV units'] * (0.555 + 0.301)
-    df['Total in-rooms'] = df['In-rooms VRV fans'] + df['External VRV units']
+    df['Total in-rooms VRV'] = df['In-rooms VRV fans'] + df['External VRV units']
     df['HVAC energy consumption'] = df['AHUs'] + df['In-rooms VRV fans'] + df['External VRV units']
 
     df = df.reindex(sorted(df.columns), axis=1)
@@ -96,8 +96,8 @@ def consumption_summary(_db, building_param, time_param, agg_param):
     df_diff = pull_consumption_data(_db, building_param, t_min, t_max)
     time_zone = cnf.sites_dict[building_param]['time_zone']
     df_diff = times.groupby_date_vars(df_diff,
-                                          cnf.agg_param_dict['Consumption'][agg_param],
-                                          to_zone=time_zone).agg(cnf.agg_param_dict['Consumption'][agg_param]['agg_func'])
+                                      cnf.consumpt_agg_param_dict[agg_param],
+                                      to_zone=time_zone).agg(cnf.consumpt_agg_param_dict[agg_param]['agg_func'])
 
     df_diff = df_diff.join(add_temp(_db, t_min, t_max, time_zone, agg_param))
     return df_diff
@@ -112,9 +112,9 @@ def add_temp(_db, t_min, t_max, time_zone, agg_param):
     #df_temp.index = pd.to_datetime(df_temp.index).round('15min')
     df_temp.index = pd.to_datetime(df_temp.index)
     df_temp = df_temp.groupby(pd.Grouper(freq='D')).max()
-    df_temp['target'] = 6 * 10782 * 12 / 365  # 6kwh/m2 is our monthly target for Seville - the other const are for calibrating to daily total consumption
-    df_temp = times.groupby_date_vars(df_temp, cnf.agg_param_dict['Consumption'][agg_param])\
-        .agg({'temperature': 'mean', 'target': cnf.agg_param_dict['Consumption'][agg_param]['agg_func']})
+    df_temp[cnf.building_target] = 6 * 10782 * 12 / 365  # 6kwh/m2 is our monthly target for Seville - the other const are for calibrating to daily total consumption
+    df_temp = times.groupby_date_vars(df_temp, cnf.consumpt_agg_param_dict[agg_param])\
+        .agg({'temperature': 'mean', cnf.building_target: cnf.consumpt_agg_param_dict[agg_param]['agg_func']})
     df_temp = df_temp.rename(columns={'temperature': 'outdoor temperature'})
 
     return df_temp
@@ -139,8 +139,8 @@ def convert_metric(df, metric_param):
 
 def chart_df(df, data_param, agg_param, metric_param):
     color = alt.Color('variable',
-                      legend=alt.Legend(labelFontSize=14, direction='vertical', titleAnchor='middle',
-                                        orient="right", title=''))
+                      legend=alt.Legend(labelFontSize=14,  titleAnchor='middle',
+                                        orient="right", direction="vertical", title=''))
 
 
     chart = (alt.Chart(df[data_param].reset_index().melt(agg_param),
@@ -151,7 +151,7 @@ def chart_df(df, data_param, agg_param, metric_param):
 
     if 'Building energy consumption' in data_param:
         # Target line chart
-        target_line = (alt.Chart(df['target'].reset_index().melt(agg_param))
+        target_line = (alt.Chart(df[cnf.building_target].reset_index().melt(agg_param))
                              .mark_line(strokeDash=[10, 10])
                              .encode(x=alt.X(agg_param, title='Date'),
                                      y=alt.Y('value'),
