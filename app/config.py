@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 import numpy as np
 import times
 
-app_version = 2.0
+app_version = 2.2
 release_date = '22/02/2023'
 
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
