@@ -1,4 +1,3 @@
-import config as cnf
 import streamlit as st
 
 
@@ -12,26 +11,6 @@ def format_row_wise(df, formatter):
         for col_num in range(len(styler.columns)):
             styler._display_funcs[(row_num, col_num)] = row_formatter
     return styler
-
-
-def line_space(cols_list, lines_list):
-    for col, lines in zip(cols_list, lines_list):
-        for i in range(lines):
-            col.text("")
-
-
-def convert_object_cols_to_boolean(df):
-    obj_cols = df[df.columns[df.dtypes == 'object']]
-    obj_cols = (obj_cols is True) or (obj_cols == 'True')
-    return df
-
-
-@st.cache_data(show_spinner=False)
-def get_config_dicts(building_param, data_param, agg_param, tab_name):
-    building_dict = cnf.sites_dict[building_param]
-    param_dict = cnf.data_param_dict[data_param]
-    agg_param_dict = cnf.agg_param_dict[tab_name][agg_param]
-    return building_dict, param_dict, agg_param_dict
 
 
 @st.cache_data(show_spinner=False)
@@ -58,12 +37,12 @@ def info(duration, test_name, market_based_electricity_cost, location_based_co2)
         This is calculated as follows:
         * VRV internal units - Total consumption in KW of floors 1-8 from BMS over 13 days between dates 21.10.2022-02.11.2022.
         * VRV external units - Total consumption in KW of external VRV units from BMS over 13 days between dates 21.10.2022-02.11.2022
-        * average % AC usage - 40% over 13 days between dates 21.10.2022-02.11.2022
+        * average % AC usage - 10% on avg in students rooms  between dates 02.12.2022-30.1.2023
         * Number of active rooms - 280 occupied rooms (out of a total of 339 rooms in Seville). 
         multiplied by 85.6%, which is the relative power capacity of the climatization external units for the rooms and clusters.
         Then the formula is: \n
-        Avg. tenants VRV kW consumption = (VRV internal units + VRV external units) / (#Hours) = 29.88 kW\n
-        Avg. tenants VRV kWh consumption per occupied room per day  = Avg. tenants VRV kWh consumption * 24 / Number of active rooms = 2.58\n
+        Avg. tenants VRV kW consumption = (VRV internal units + VRV external units) / (#Hours) \n
+        Avg. tenants VRV kWh consumption per occupied room per day  = Avg. tenants VRV kWh consumption * 24 / Number of active rooms = 3.42\n
         Average room electricity consumption (kWh) = Avg. tenants VRV kWh consumption per occupied room per day * duration in days * 
         Percentage of A/C usage (%) / average % AC usage = 2.58 * duration in days * Percentage of A/C usage (%) / 40%
         \n

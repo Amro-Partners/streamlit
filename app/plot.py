@@ -12,7 +12,7 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 def plot_heatmap(df, agg_param, fmt, title, to_zone, scale, col):
-    agg_param_dict = cnf.agg_param_dict['Heatmaps'][agg_param]
+    agg_param_dict = cnf.hmps_agg_param_dict[agg_param]
     df_agg = times.groupby_date_vars(df, agg_param_dict, to_zone=to_zone).mean()
     vmin, vmax = df_agg.min().min(), df_agg.max().max()
     fig = plt.figure(figsize=(scale*24, scale*len(df_agg.columns)))
