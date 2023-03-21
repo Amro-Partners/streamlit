@@ -89,15 +89,15 @@ def main():
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
      col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param) = set_homepage()  # Get choice of building
 
-    # consumption
-    cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
-                                       tab_consumpt_time_param, tab_consumpt_agg_param)
-    cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
-    if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
-        col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
-    else:
-        chart = cons.chart_df(cons_df_metric, tab_consumpt_data_param, tab_consumpt_agg_param, tab_consumpt_metric_param)
-        col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
+    # # consumption
+    # cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
+    #                                    tab_consumpt_time_param, tab_consumpt_agg_param)
+    # cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
+    # if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
+    #     col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
+    # else:
+    #     chart = cons.chart_df(cons_df_metric, tab_consumpt_data_param, tab_consumpt_agg_param, tab_consumpt_metric_param)
+    #     col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
 
 
     # # Heatmaps
@@ -111,56 +111,56 @@ def main():
         for collection_df in hmp_dict[tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_agg_param].values():
             hmap.run_plots_heatmaps(collection_df, tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_time_param, tab_rooms_hmaps_agg_param, col2_rooms_hmaps)
 
-    # Room charts
-    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # TODO: move the below loops and concatenation into transfer process
-
-    #rooms_list_of_dicts = read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
-    rooms_list_of_dicts = read_files_in_loop('charts/rooms/',
-                                                     (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
-                                                     (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
-                                                     storage_bucket)
-
-    rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param)
-    cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_room_param],
-                        st.session_state.chart_rooms_raw_data,
-                        cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
-
-    # AHU charts
-    # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
-    # TODO: move the below loops and concatenation into transfer process
-    ahu_list_of_dicts = read_files_in_loop('charts/ahu/',
-                                                  (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
-                                                  (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
-                                                  storage_bucket)
-
-    ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts, tab_ahu_charts_building_param)
-    cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_ahu_param],
-                        st.session_state.chart_ahu_raw_data,
-                        cnf.sites_dict[tab_ahu_charts_building_param]['AHU_chart_cols'], col2_AHU_charts)
-
-    # expers
-    # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # TODO: ince we move to BQ enable start_date longer than X days
-    start_date = (cnf.exp_dict[tab_exper_exp_param]['start_exp_date_utc']
-                  - timedelta(days=cnf.exp_dict[tab_exper_exp_param]['calibration_days']))
-    end_date = min(times.utc_now(), cnf.exp_dict[tab_exper_exp_param]['end_exp_date_utc'])
-    exp_list_of_dicts = read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
-    summary_dict = exp.get_summary_dict(exp_list_of_dicts, tab_exper_exp_param)
-    test_dict = summary_dict[cnf.test_group]
-    control_dict = summary_dict[cnf.control_group]
-    if (len(control_dict['summary avg post']) == 0) or (len(test_dict['summary avg post']) == 0):
-        col2_exper.header("Not enough data to show results yet.")
-    else:
-        # get selected metric summarised in a compact df
-        metric_df = exp.get_selected_metric_df(test_dict, control_dict, tab_exper_exp_param,
-                                               tab_exper_metric_param, tab_exper_agg_param)
-        if 'exp_raw_data' in st.session_state and st.session_state.exp_raw_data:
-            col2_exper.dataframe(metric_df, use_container_width=True)
-        else:
-            chart = exp.chart_df(metric_df, tab_exper_exp_param, tab_exper_metric_param)
-            col2_exper.altair_chart(chart.interactive(), use_container_width=True)
-            exp.show_summary_tables(test_dict, control_dict, col2_exper, tab_exper_exp_param)
+    # # Room charts
+    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # # TODO: move the below loops and concatenation into transfer process
+    #
+    # #rooms_list_of_dicts = read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
+    # rooms_list_of_dicts = read_files_in_loop('charts/rooms/',
+    #                                                  (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
+    #                                                  (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+    #                                                  storage_bucket)
+    #
+    # rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param)
+    # cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_room_param],
+    #                     st.session_state.chart_rooms_raw_data,
+    #                     cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
+    #
+    # # AHU charts
+    # # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
+    # # TODO: move the below loops and concatenation into transfer process
+    # ahu_list_of_dicts = read_files_in_loop('charts/ahu/',
+    #                                               (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
+    #                                               (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+    #                                               storage_bucket)
+    #
+    # ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts, tab_ahu_charts_building_param)
+    # cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_ahu_param],
+    #                     st.session_state.chart_ahu_raw_data,
+    #                     cnf.sites_dict[tab_ahu_charts_building_param]['AHU_chart_cols'], col2_AHU_charts)
+    #
+    # # expers
+    # # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # # TODO: ince we move to BQ enable start_date longer than X days
+    # start_date = (cnf.exp_dict[tab_exper_exp_param]['start_exp_date_utc']
+    #               - timedelta(days=cnf.exp_dict[tab_exper_exp_param]['calibration_days']))
+    # end_date = min(times.utc_now(), cnf.exp_dict[tab_exper_exp_param]['end_exp_date_utc'])
+    # exp_list_of_dicts = read_files_in_loop('experiments/rooms/', start_date, end_date, storage_bucket)
+    # summary_dict = exp.get_summary_dict(exp_list_of_dicts, tab_exper_exp_param)
+    # test_dict = summary_dict[cnf.test_group]
+    # control_dict = summary_dict[cnf.control_group]
+    # if (len(control_dict['summary avg post']) == 0) or (len(test_dict['summary avg post']) == 0):
+    #     col2_exper.header("Not enough data to show results yet.")
+    # else:
+    #     # get selected metric summarised in a compact df
+    #     metric_df = exp.get_selected_metric_df(test_dict, control_dict, tab_exper_exp_param,
+    #                                            tab_exper_metric_param, tab_exper_agg_param)
+    #     if 'exp_raw_data' in st.session_state and st.session_state.exp_raw_data:
+    #         col2_exper.dataframe(metric_df, use_container_width=True)
+    #     else:
+    #         chart = exp.chart_df(metric_df, tab_exper_exp_param, tab_exper_metric_param)
+    #         col2_exper.altair_chart(chart.interactive(), use_container_width=True)
+    #         exp.show_summary_tables(test_dict, control_dict, col2_exper, tab_exper_exp_param)
 
 
 main()

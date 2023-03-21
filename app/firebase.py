@@ -35,3 +35,13 @@ def get_db_from_cert_file(cert_file, storage_bucket):
 @st.cache_resource(show_spinner=False)
 def read_and_unpickle(file_name, _storage_bucket):
     return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
+
+
+@st.cache_resource(show_spinner=False)
+def read_and_unpickle(file_name, _storage_bucket):
+    return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
+
+
+@st.cache_resource(show_spinner=False)
+def read_bq(file_name, _storage_bucket):
+    return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
