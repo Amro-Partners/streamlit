@@ -11,30 +11,7 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-def plot_heatmap(df, agg_param, fmt, title, to_zone, scale, col):
-    agg_param_dict = cnf.hmps_agg_param_dict[agg_param]
-    df_agg = times.groupby_date_vars(df, agg_param_dict, to_zone=to_zone).mean()
-    vmin, vmax = df_agg.min().min(), df_agg.max().max()
-    fig = plt.figure(figsize=(scale*24, scale*len(df_agg.columns)))
-    sns.set(font_scale=scale*2)
 
-    if st.session_state.hmaps_raw_data:
-        col.header(title)
-        col.dataframe(df_agg.sort_index())
-    else:
-
-        df_plot = df_agg.T.sort_index()
-        sns.heatmap(df_plot,
-                    annot=True, annot_kws={"fontsize": scale * 16, "weight": "bold"},
-                    fmt=fmt, linewidths=.5,
-                    cmap=sns.color_palette("coolwarm", as_cmap=True),
-                    vmin=vmin, vmax=vmax, cbar=False)
-        labels_fontsize = scale * 24
-        plt.title(title, fontsize=labels_fontsize)  # title with fontsize 20
-        plt.xlabel(agg_param_dict['aggregation_field_name'], fontsize=labels_fontsize)  # x-axis label with fontsize 15
-        #plt.ylabel(ylabel, fontsize=labels_fontsize) # y-axis label with fontsize 15
-        plt.yticks(rotation=0)
-        col.write(fig)
 
 
 @st.cache_data(show_spinner=False)

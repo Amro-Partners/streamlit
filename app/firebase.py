@@ -6,6 +6,7 @@ import pickle
 import json
 from google.oauth2 import service_account
 pd.options.mode.chained_assignment = None  # default='warn'
+from google.cloud import bigquery
 
 
 def get_db_from_firebase_key(storage_bucket):
@@ -42,6 +43,17 @@ def read_and_unpickle(file_name, _storage_bucket):
     return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
 
 
-@st.cache_resource(show_spinner=False)
-def read_bq(file_name, _storage_bucket):
-    return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
+def bq_client(project):
+    return bigquery.Client(project=project)
+
+
+def read_bq(_client, dataset_table, where_cond=None):
+    if where_cond is None:
+        where_cond = ""
+    query = f"""
+        SELECT *
+        FROM {dataset_table}
+        {where_cond}
+    """
+    # Fetch the data using the client object
+    return _client.query(query).to_dataframe()

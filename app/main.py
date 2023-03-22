@@ -46,9 +46,9 @@ def set_homepage():
     col1_consumpt, _,  col2_consumpt, _ = tab_consumpt.columns(cnf.tabs_space)
     col1_exper, _, col2_exper, _ = tab_exper.columns(cnf.tabs_space)
 
-    (tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param,
-     tab_rooms_hmaps_time_param, tab_rooms_hmaps_agg_param,
-     tab_rooms_hmaps_raw_data) = hmap.set_params_heatmaps(col1_rooms_hmaps, col2_rooms_hmaps)
+    (tab_hmaps_building_param, tab_hmaps_data_param,
+     tab_hmaps_time_param, tab_hmaps_agg_param,
+     tab_hmaps_raw_data) = hmap.set_params_heatmaps(col1_rooms_hmaps, col2_rooms_hmaps)
 
     (tab_rooms_charts_building_param, tab_rooms_charts_floor_param,
      tab_rooms_charts_room_param, tab_rooms_charts_raw_data) = cha.set_params_room_charts(col1_rooms_charts, col2_rooms_charts)
@@ -63,7 +63,7 @@ def set_homepage():
     (tab_exper_exp_param, tab_exper_metric_param, 
      tab_exper_agg_param, tab_exper_raw_data) = exp.set_params_exp(col1_exper, col2_exper)
 
-    return (col2_rooms_hmaps, tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_time_param, tab_rooms_hmaps_agg_param,
+    return (col2_rooms_hmaps, tab_hmaps_building_param, tab_hmaps_data_param, tab_hmaps_time_param, tab_hmaps_agg_param,
             col2_rooms_charts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param, tab_rooms_charts_room_param,
             col2_AHU_charts, tab_ahu_charts_building_param, tab_ahu_charts_ahu_param,
             col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
@@ -81,9 +81,12 @@ def read_files_in_loop(file_prefix, start_date, end_date, _storage_bucket):
 
 def main():
     date_yesterday = (times.utc_now() - timedelta(days=1))
-    firestore_client, storage_bucket = fb.get_db_from_firebase_key(cnf.storage_bucket)
+    date_last_week = (times.utc_now() - timedelta(days=7))
 
-    (col2_rooms_hmaps, tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_time_param, tab_rooms_hmaps_agg_param,
+    firestore_client, storage_bucket = fb.get_db_from_firebase_key(cnf.storage_bucket)
+    bq_client = fb.bq_client(cnf.bq_project)
+
+    (col2_rooms_hmaps, tab_hmaps_building_param, tab_hmaps_data_param, tab_hmaps_time_param, tab_hmaps_agg_param,
      col2_rooms_charts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param, tab_rooms_charts_room_param,
      col2_AHU_charts, tab_ahu_charts_building_param, tab_ahu_charts_ahu_param,
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
@@ -100,31 +103,53 @@ def main():
     #     col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
 
 
-    # # Heatmaps
-    # hmp_dict structure: {[building_param, data_param, agg_param] -> collect_name  -> collect_title else rooms_title -> df of the collection and parameter}
-    times.log(f'loading file heatmaps/{date_yesterday.strftime("%Y/%m/%d")}')
-    hmp_dict = fb.read_and_unpickle(f'heatmaps/{date_yesterday.strftime("%Y/%m/%d")}', storage_bucket)
-    hmp_dict_vals = hmp_dict[tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_agg_param].values()
-    if all(not d for d in hmp_dict_vals):
-        col2_rooms_hmaps.subheader('Sorry. This data is not available for the site.')
-    else:
-        for collection_df in hmp_dict[tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_agg_param].values():
-            hmap.run_plots_heatmaps(collection_df, tab_rooms_hmaps_building_param, tab_rooms_hmaps_data_param, tab_rooms_hmaps_time_param, tab_rooms_hmaps_agg_param, col2_rooms_hmaps)
+    # # # Heatmaps
+    # times.log(f'loading file heatmaps between {(times.utc_now() - timedelta(days=7)).strftime("%Y-%m-%d")} AND {date_yesterday.strftime("%Y-%m-%d")}')
+    # site_dict = cnf.sites_dict[tab_hmaps_building_param]
+    # param_dict = cnf.data_param_dict[tab_hmaps_data_param]
+    # agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
+    #
+    # where_cond = f''' WHERE
+    #     Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
+    #     AND building = "{tab_hmaps_building_param}"
+    #     AND data_param = "{param_dict['bq_field']}"
+    # '''
+    # hmp_df = fb.read_bq(bq_client, 'heatmaps.heatmaps', where_cond)
+    # for floor in site_dict['floors_order']:
+    #     hmp_df_floor = hmap.pivot_df(hmp_df, floor)
+    #     hmp_df_floor_agg = times.groupby_date_vars(hmp_df_floor, agg_param_dict, to_zone=site_dict['time_zone']).mean()
+    #     hmap.plot_heatmap(df=hmp_df_floor_agg,
+    #                       fmt=param_dict['fmt'],
+    #                       title=floor,
+    #                       xlabel=agg_param_dict['aggregation_field_name'],
+    #                       ylabel="Rooms",
+    #                       scale=cnf.hmaps_figure_memory_scale,
+    #                       col=col2_rooms_hmaps)
 
-    # # Room charts
-    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # # TODO: move the below loops and concatenation into transfer process
-    #
-    # #rooms_list_of_dicts = read_files_in_loop(date_yesterday, 'charts/rooms/', 29, storage_bucket)
-    # rooms_list_of_dicts = read_files_in_loop('charts/rooms/',
-    #                                                  (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0),
-    #                                                  (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
-    #                                                  storage_bucket)
-    #
-    # rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param)
-    # cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_room_param],
-    #                     st.session_state.chart_rooms_raw_data,
-    #                     cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
+    # Room charts
+    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # TODO: move the below loops and concatenation into transfer process
+
+    #rooms_list_of_dicts = read_files_in_loop((times.utc_now() - timedelta(days=1)), 'charts/rooms/', 29, storage_bucket)
+    rooms_list_of_dicts = read_files_in_loop('charts/rooms/',
+                                                     (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                     (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+                                                     storage_bucket)
+
+    site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
+    param_dict = cnf.data_param_dict[tab_hmaps_data_param]
+    agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
+    where_cond = f''' WHERE
+        Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
+        AND building = "{tab_rooms_charts_building_param}"
+        AND room = "{tab_rooms_charts_room_param}"
+    '''
+    rooms_chart_df = fb.read_bq(bq_client, 'charts.rooms', where_cond)
+
+    rooms_dict_of_dfs = cha.get_rooms_dict_of_dfs(rooms_list_of_dicts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param)
+    cha.run_flow_charts(rooms_dict_of_dfs[tab_rooms_charts_room_param],
+                        st.session_state.chart_rooms_raw_data,
+                        cnf.sites_dict[tab_ahu_charts_building_param]['rooms_chart_cols'], col2_rooms_charts)
     #
     # # AHU charts
     # # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
@@ -134,7 +159,7 @@ def main():
     #                                               (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
     #                                               storage_bucket)
     #
-    # ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts, tab_ahu_charts_building_param)
+    # # ahu_dict_of_dfs = cha.get_ahu_dict_of_dfs(ahu_list_of_dicts, tab_ahu_charts_building_param)
     # cha.run_flow_charts(ahu_dict_of_dfs[tab_ahu_charts_ahu_param],
     #                     st.session_state.chart_ahu_raw_data,
     #                     cnf.sites_dict[tab_ahu_charts_building_param]['AHU_chart_cols'], col2_AHU_charts)

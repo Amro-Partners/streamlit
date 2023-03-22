@@ -7,6 +7,7 @@ release_date = '22/02/2023'
 
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
 storage_bucket = 'amro-partners.appspot.com'
+bq_project = "amro-partners"
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
 tabs_space = [2.5, 0.5, 6, 1]
@@ -51,36 +52,42 @@ vmax: heatmap scale maximum
 data_param_dict = {
     "Avg. room temperature (°C)": {
         'is_rooms': True,
+        'bq_field': 'average_room_temperature',
         'field_keyword': ['Room_Temp', 'RoomTemp'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
         'fmt': '.1f'
     },
     "Cooling temperature set point (°C)": {
         'is_rooms': True,
+        'bq_field': 'cooling_temperature_setpoint',
         'field_keyword': ['SetTempCool'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
         'fmt': '.1f'
     },
     "Heating temperature set point (°C)": {
         'is_rooms': True,
+        'bq_field': 'heating_temperature_setpoint',
         'field_keyword': ['SetTempHeat'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
         'fmt': '.1f'
     },
     'Percentage of A/C usage (%)': {
         'is_rooms': True,
+        'bq_field': 'percentage_of_ac_usage',
         'field_keyword': ['OnOffState', 'State_BI'],
         'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
         'fmt': '0.0%'
     },
     'Outside temperature (°C)': {
         'is_rooms': False,
+        'bq_field': 'outside_temperature',
         'field_keyword': ['temperature'],
         'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
         'fmt': '.1f'
     },
     '_Outside temperature 3h prediction (°C)': {
         'is_rooms': False,
+        'bq_field': 'outside_temperature_3h prediction',
         'field_keyword': ['3h_temperature_interp'],
         'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
     },
@@ -88,10 +95,10 @@ data_param_dict = {
 
 
 hmps_agg_param_dict = {
-    "Date": {
-        'aggregation_field_name': 'Date',
-        'aggregation_strftime': '%Y-%m-%d\n%A'
-    },
+    # "Date": {
+    #     'aggregation_field_name': 'Date',
+    #     'aggregation_strftime': '%Y-%m-%d\n%A'
+    # },
     "Hour of Day": {
         'aggregation_field_name': "Hour of Day",
         'aggregation_strftime': '%H'
