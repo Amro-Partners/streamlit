@@ -8,7 +8,7 @@ import config as cnf
 import experiments_utils as utl
 import streamlit as st
 import altair as alt
-from pytz import timezone
+import pytz
 
 
 def set_params_exp(col1, col2):
@@ -28,7 +28,6 @@ def avg_all_rooms(df_dict_room):
 
 
 def get_exp_metrics(df_sum, flight_duration, exp_dict):
-    df_sum = df_sum.loc[:, [c for c in df_sum.columns if 'Outside temperature' not in c]]
     # TODO: improve this formula once we store consumption with transform repo
     # 3.42 - avg daily total VRV consumption per room (external units included)
     df_sum[cnf.elect_consump_name] = ((3.42 / 0.1 / (24 * 4)) * flight_duration.days
@@ -38,24 +37,16 @@ def get_exp_metrics(df_sum, flight_duration, exp_dict):
     return df_sum
 
 
-@st.cache_data(show_spinner=False)
-def get_summary_dict(_exp_list_of_dicts, exp_param):
-    summary_dict = {}
-    if exp_param in _exp_list_of_dicts[0].keys():  # checking if exp_param is a key
-        exp_dict_of_dfs = {}
-        for floor_param in _exp_list_of_dicts[0][exp_param].keys():
-            exp_dict_of_dfs[floor_param] = {}
-            for room_param in _exp_list_of_dicts[0][exp_param][floor_param].keys():
-                exp_dict_of_dfs[floor_param][room_param] = (
-                    pd.concat([dic[exp_param][floor_param][room_param]
-                               for dic in _exp_list_of_dicts]).drop_duplicates())
-
-        summary_dict = get_exp_summary_dict(exp_dict_of_dfs, exp_param)
-    return summary_dict
+def select_columns(df):
+    df = df.set_index('timestamp')
+    rename_cols = {param_dict['bq_field']: param for param, param_dict
+                   in cnf.data_param_dict.items() if param_dict['show_per_room']}
+    drop_cols = [col for col in df.columns if col not in rename_cols.keys()]
+    return df.drop(columns=drop_cols).rename(columns=rename_cols)
 
 
 @st.cache_data(show_spinner=False)
-def get_exp_summary_dict(_df_dict_room, exp_param):
+def get_exp_summary_dict(_exp_df, exp_param):
     exp_dict = cnf.exp_dict[exp_param]
     summary_dict = {}
 
@@ -63,15 +54,21 @@ def get_exp_summary_dict(_df_dict_room, exp_param):
     flight_duration = exp_dict['end_exp_date_utc'] - exp_dict['start_exp_date_utc']
 
     for group_param in exp_dict['groups_order']:
-        df_sum = avg_all_rooms(_df_dict_room[group_param])
+        df_group = _exp_df[_exp_df.floor == group_param]
+        df_sum = select_columns(df_group)
+        #     _exp_df[_exp_df.floor == group_param].drop(columns=['floor'])
+        # df_sum = (df_sum.set_index('timestamp').rename(
+        #     columns={param_dict['bq_field']: param for param, param_dict
+        #              in cnf.data_param_dict.items() if param_dict['show_per_room']}))
+
         df_sum = get_exp_metrics(df_sum, flight_duration, exp_dict)
 
-        t = exp_dict['start_exp_date_utc'].astimezone(timezone(exp_dict['time_zone']))
+        t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC)
         df_sum_pre = df_sum.loc[df_sum.index < t]
         df_sum_post = df_sum.loc[df_sum.index >= t]
 
         summary_dict[group_param] = {}
-        summary_dict[group_param][cnf.num_rooms_name] = len(_df_dict_room[group_param])
+        summary_dict[group_param][cnf.num_rooms_name] = df_group.rooms_count.max()
 
         summary_dict[group_param][cnf.avg_group_df_name] = df_sum
         summary_dict[group_param][cnf.avg_pre_df_name] = df_sum_pre
@@ -217,7 +214,7 @@ def chart_df(metric_df, exp_param, metric_param):
                         )))
 
     exp_dict = cnf.exp_dict[exp_param]
-    t = exp_dict['start_exp_date_utc'].astimezone(timezone(exp_dict['time_zone']))
+    t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC)  # .astimezone(timezone(exp_dict['time_zone']))
     xrule = (alt.Chart(pd.DataFrame({'Date': [t]}))
              .mark_rule(strokeDash=[12, 6], strokeWidth=2).encode(x='Date:T', color=alt.value('#7f7f7f')))
     return chart + xrule

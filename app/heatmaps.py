@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 def set_params_heatmaps(col1, col2):
     building_param = col1.radio('Select building', cnf.sites_dict, key='hmaps_building')
-    data_param = col1.radio('Select data', [key for key in cnf.data_param_dict.keys() if not key.startswith('_')], key='hmaps_data')
+    data_param = col1.radio('Select data', [key for key, val in cnf.data_param_dict.items() if val['show_per_room']], key='hmaps_data')
     min_time = (times.utc_now() - timedelta(days=7)).replace(hour=0, minute=0, second=0, microsecond=0)
     max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
     time_param = col1.slider('Select date range',
@@ -31,8 +31,8 @@ def get_config_dicts(building_param, data_param, agg_param):
 
 
 @st.cache_data(show_spinner=False)
-def pivot_df(df, floor):
-    return df[df.floor == floor].pivot(index='timestamp', columns='room', values='parameter_value')
+def pivot_df(df, floor, index_col):
+    return df[df.floor == floor].pivot(index=index_col, columns='room', values='parameter_value')
 
 
 def plot_heatmap(df, fmt, title, xlabel, ylabel, scale, col):
@@ -44,7 +44,6 @@ def plot_heatmap(df, fmt, title, xlabel, ylabel, scale, col):
         col.header(title)
         col.dataframe(df.sort_index())
     else:
-
         df_plot = df.T.sort_index()
         sns.heatmap(df_plot,
                     annot=True, annot_kws={"fontsize": scale * 16, "weight": "bold"},

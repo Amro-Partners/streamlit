@@ -47,6 +47,10 @@ def bq_client(project):
     return bigquery.Client(project=project)
 
 
+def send_bq_query(_client, query):
+    return _client.query(query).to_dataframe()
+
+
 def read_bq(_client, dataset_table, where_cond=None):
     if where_cond is None:
         where_cond = ""
@@ -56,4 +60,4 @@ def read_bq(_client, dataset_table, where_cond=None):
         {where_cond}
     """
     # Fetch the data using the client object
-    return _client.query(query).to_dataframe()
+    return send_bq_query(_client, query)
