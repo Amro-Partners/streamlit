@@ -207,7 +207,7 @@ exp_dict = {
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  # (times.utc_now() - timedelta(days=1)),  #
         'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 2,
+        'calibration_days': 7,
         'market_based_electricity_cost': 0.1425,
         'location_based_co2': 0.259
     },
