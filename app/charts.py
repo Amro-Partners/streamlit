@@ -26,11 +26,11 @@ def set_params_ahu_charts(col1, col2):
 
 
 def run_flow_charts(df, session_state_raw_data, chart_cols, _col):
-    df = df.sort_index()
+    df = df.sort_values('timestamp', ascending=True)
     if 'Cooling temperature set point (°C)' in df.columns:
         # TODO: add setpoint mode to transfer and then drop the one that is not active
         df = df.drop(columns=['Cooling temperature set point (°C)'])
-    max_datetime = df.index[-1]
+    max_datetime = df.timestamp.iloc[-1]
     if session_state_raw_data:
         _col.dataframe(df, use_container_width=True)
     else:

@@ -35,7 +35,9 @@ def convert_datetime_to_string(date_time):
 
 def change_pd_time_zone(datetime_col, source_tz, destin_tz):
     # converting source_tz to destin_tz in a pandas column datetime_col
-    return datetime_col.tz_localize(source_tz).tz_convert(destin_tz)
+    if datetime_col.tz is None: # not time zone aware
+        datetime_col = datetime_col.tz_localize(source_tz)
+    return datetime_col.tz_convert(destin_tz)
 
 
 def format_firebase_doc_id_string(doc_id):
@@ -70,6 +72,7 @@ def change_index_timezone(df, to_zone=None):
     return datetime_col
 
 
+@st.cache_data
 def groupby_date_vars(df, agg_param_dict, to_zone=None):
     datetime_col = change_index_timezone(df, to_zone)
     aggregation_field_name = agg_param_dict['aggregation_field_name']

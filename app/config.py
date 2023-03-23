@@ -2,11 +2,12 @@ from datetime import timedelta, datetime
 import numpy as np
 import times
 
-app_version = 2.2
+app_version = 3.0
 release_date = '22/02/2023'
 
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
 storage_bucket = 'amro-partners.appspot.com'
+bq_project = "amro-partners"
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
 tabs_space = [2.5, 0.5, 6, 1]
@@ -19,9 +20,9 @@ sites_dict = {
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3", "Planta 4",
                          "Planta 5", "Planta 6", "Planta 7", "Planta 8", "Planta 9"],
         'AHU_units': ['CL01', 'CL02', 'CL03'],
-        'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)'),
+        'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
                              (), 'Percentage of A/C usage (%)'],
-        'AHU_chart_cols': [('temperature', 'Ventilation temperature set point (°C)'),
+        'AHU_chart_cols': [('Outside temperature (°C)', 'Ventilation temperature set point (°C)'),
                            ('Ventilation rate supply', 'Ventilation rate return'),
                            'Supply Running'],
         'floors_col': 'Title'
@@ -50,39 +51,57 @@ vmax: heatmap scale maximum
 '''
 data_param_dict = {
     "Avg. room temperature (°C)": {
-        'is_rooms': True,
-        'field_keyword': ['Room_Temp', 'RoomTemp'],
-        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f'
+        'show_per_room': True,
+        'bq_field': 'average_room_temperature',
+        'fmt': '.1f',
+        'colour': 'black'
     },
     "Cooling temperature set point (°C)": {
-        'is_rooms': True,
-        'field_keyword': ['SetTempCool'],
-        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f'
+        'show_per_room': True,
+        'bq_field': 'cooling_temperature_setpoint',
+        'fmt': '.1f',
+        'colour': 'lightskyblue'
     },
     "Heating temperature set point (°C)": {
-        'is_rooms': True,
-        'field_keyword': ['SetTempHeat'],
-        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f'
+        'show_per_room': True,
+        'bq_field': 'heating_temperature_setpoint',
+        'fmt': '.1f',
+        'colour': 'red'
     },
     'Percentage of A/C usage (%)': {
-        'is_rooms': True,
-        'field_keyword': ['OnOffState', 'State_BI'],
-        'match_keyword': 'substring',  # 'substring' or 'exact' match for field_keyword
+        'show_per_room': True,
+        'bq_field': 'percentage_of_ac_usage',
         'fmt': '0.0%'
     },
     'Outside temperature (°C)': {
-        'is_rooms': False,
-        'field_keyword': ['temperature'],
-        'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
-        'fmt': '.1f'
+        'show_per_room': True,
+        'bq_field': 'outside_temperature',
+        'fmt': '.1f',
+        'colour': 'burlywood'
     },
     '_Outside temperature 3h prediction (°C)': {
-        'is_rooms': False,
-        'field_keyword': ['3h_temperature_interp'],
-        'match_keyword': 'exact',  # 'substring' or 'exact' match for field_keyword
+        'show_per_room': False,
+        'bq_field': 'outside_temperature_3h prediction',
+        'colour': 'burlywood'
+    },
+    'Ventilation temperature set point (°C)': {
+        'show_per_room': False,
+        'bq_field': 'ventilation_temperature_setpoint',
+        'colour': 'lightskyblue'
+    },
+    'Supply Running': {
+        'show_per_room': False,
+        'bq_field': 'supply_running'
+    },
+    'Ventilation rate supply': {
+        'show_per_room': False,
+        'bq_field': 'ventilation_rate_supply',
+        'colour': 'peru'
+    },
+    'Ventilation rate return': {
+        'show_per_room': False,
+        'bq_field': 'ventilation_rate_supply',
+        'colour': 'burlywood'
     },
 }
 
@@ -90,26 +109,14 @@ data_param_dict = {
 hmps_agg_param_dict = {
     "Date": {
         'aggregation_field_name': 'Date',
+        'aggregation_bq': 'DATE',
         'aggregation_strftime': '%Y-%m-%d\n%A'
     },
     "Hour of Day": {
         'aggregation_field_name': "Hour of Day",
+        'aggregation_bq': 'HOUR',
         'aggregation_strftime': '%H'
     }
-}
-
-
-######### Charts  ###########
-
-chart_colours_dict = {
-    'Avg. room temperature (°C)': 'black',
-    'Cooling temperature set point (°C)': 'lightskyblue',
-    'Heating temperature set point (°C)': 'red',
-    'Outside temperature (°C)': 'burlywood',
-    'temperature': 'black',
-    'Ventilation temperature set point (°C)': 'lightskyblue',
-    'Ventilation rate supply': 'peru',
-    'Ventilation rate return': 'burlywood'
 }
 
 
@@ -198,7 +205,7 @@ exp_dict = {
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  #(times.utc_now() - timedelta(days=7)),  #
+        'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  # (times.utc_now() - timedelta(days=1)),  #
         'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.1425,
