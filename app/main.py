@@ -10,6 +10,7 @@ import experiments as exp
 import consumption as cons
 import warnings
 
+
 warnings.filterwarnings('ignore')
 st.set_page_config(layout="wide")
 
@@ -84,7 +85,7 @@ def main():
     date_last_week = (times.utc_now() - timedelta(days=7))
 
     firestore_client, storage_bucket = fb.get_db_from_firebase_key(cnf.storage_bucket)
-    bq_client = fb.bq_client(cnf.bq_project)
+    bq_client = fb.get_bq_client_from_toml_key(cnf.bq_project)
 
     (col2_rooms_hmaps, tab_hmaps_building_param, tab_hmaps_data_param, tab_hmaps_time_param, tab_hmaps_agg_param,
      col2_rooms_charts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param, tab_rooms_charts_room_param,

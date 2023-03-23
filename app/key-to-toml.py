@@ -2,15 +2,18 @@
 
 import toml
 import os
+import config as cnf
 
-cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json" # certification file for firebase authentication
+cert_file = cnf.bq_cert_file  # certification file for firebase authentication
 output_file = os.path.join('.streamlit', "secrets.toml")
 
 with open(os.path.join(os.path.realpath('./'), cert_file)) as json_file:
     json_text = json_file.read()
 
-config = {"textkey": json_text}
+config = {"bigquery_key": json_text}
 toml_config = toml.dumps(config)
 
-with open((os.path.join(os.path.realpath('./'), output_file)), "w") as target:
+# Write the new key in append mode
+with open((os.path.join(os.path.realpath('./'), output_file)), "a") as target:
+    target.write("\n")  # Add a new line before appending the new data
     target.write(toml_config)

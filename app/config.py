@@ -6,6 +6,7 @@ app_version = 3.0
 release_date = '22/02/2023'
 
 cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certification file for firebase authentication
+bq_cert_file = "amro-partners-d3ff1aacd9ea.json"
 storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
 

@@ -18,21 +18,6 @@ def get_db_from_firebase_key(storage_bucket):
     return firestore_client, storage_bucket
 
 
-def get_db_from_cert_file(cert_file, storage_bucket):
-    # Use a service account
-    try:
-        app = firebase_admin.get_app()
-    except ValueError as e:
-        cred = credentials.Certificate(cert_file)
-
-        try:
-            firebase_admin.initialize_app(cred, {'storageBucket': storage_bucket})
-        except ValueError as e:
-            pass
-
-    return firestore.client(), storage.bucket()
-
-
 @st.cache_resource(show_spinner=False)
 def read_and_unpickle(file_name, _storage_bucket):
     return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
@@ -43,8 +28,17 @@ def read_and_unpickle(file_name, _storage_bucket):
     return pickle.loads(_storage_bucket.blob(file_name).download_as_string(timeout=300))
 
 
-def bq_client(project):
-    return bigquery.Client(project=project)
+def get_bq_client_from_toml_key(project):
+    key_dict = json.loads(st.secrets["bigquery_key"])
+    creds = service_account.Credentials.from_service_account_info(
+            key_dict,
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+    )
+    return bq_client(creds=creds, project=project)
+
+
+def bq_client(creds, project):
+    return bigquery.Client(credentials=creds, project=project)
 
 
 def send_bq_query(_client, query):
