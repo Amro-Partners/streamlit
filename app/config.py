@@ -217,7 +217,7 @@ exp_dict = {
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 4, 23, 16, 0),
+        'start_exp_date_utc': datetime(2023, 3, 23, 16, 0),
         'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
