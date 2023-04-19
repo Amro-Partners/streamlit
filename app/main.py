@@ -93,78 +93,78 @@ def main():
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
      col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param) = set_homepage()  # Get choice of building
 
-    # # consumption
-    # cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
-    #                                    tab_consumpt_time_param, tab_consumpt_agg_param)
-    # cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
-    # if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
-    #     col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
-    # else:
-    #     chart = cons.chart_df(cons_df_metric, tab_consumpt_data_param, tab_consumpt_agg_param, tab_consumpt_metric_param)
-    #     col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
-    #
-    #
-    # # Heatmaps
-    # times.log(f'loading file heatmaps between {(times.utc_now() - timedelta(days=7)).strftime("%Y-%m-%d")} AND {date_yesterday.strftime("%Y-%m-%d")}')
-    # site_dict = cnf.sites_dict[tab_hmaps_building_param]
-    # param_dict = cnf.data_param_dict[tab_hmaps_data_param]
-    # agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
-    #
-    # query = f'''
-    #     SELECT
-    #         EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
-    #         floor,
-    #         room,
-    #         AVG(parameter_value) AS parameter_value
-    #     FROM heatmaps.heatmaps
-    #     WHERE
-    #         Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
-    #         AND building = "{tab_hmaps_building_param}"
-    #         AND data_param = "{param_dict['bq_field']}"
-    #     GROUP BY
-    #         EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}"),
-    #         floor,
-    #         room
-    # '''
-    # hmp_df = fb.send_bq_query(bq_client, query)
-    # for floor in site_dict['floors_order']:
-    #     hmp_df_floor = hmap.pivot_df(hmp_df, floor, agg_param_dict['aggregation_field_name'])
-    #     hmap.plot_heatmap(df=hmp_df_floor,
-    #                       fmt=param_dict['fmt'],
-    #                       title=floor,
-    #                       xlabel=agg_param_dict['aggregation_field_name'],
-    #                       ylabel="Rooms",
-    #                       scale=cnf.hmaps_figure_memory_scale,
-    #                       col=col2_rooms_hmaps)
-    #
-    # # Room charts
-    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # # TODO: move the below loops and concatenation into transfer process
-    # site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
-    # where_cond = f''' WHERE
-    #     Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
-    #     AND building = "{tab_rooms_charts_building_param}"
-    #     AND room = "{tab_rooms_charts_room_param}"
-    # '''
-    # rooms_chart_df = fb.read_bq(bq_client, 'charts.rooms', where_cond)
-    # cha.run_flow_charts(rooms_chart_df,
-    #                     st.session_state.chart_rooms_raw_data,
-    #                     site_dict['rooms_chart_cols'], col2_rooms_charts)
-    #
-    # # AHU charts
-    # # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
-    # # TODO: move the below loops and concatenation into transfer process
-    # site_dict = cnf.sites_dict[tab_ahu_charts_building_param]
-    # where_cond = f''' WHERE
-    #     Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
-    #     AND building = "{tab_ahu_charts_building_param}"
-    #     AND ahu = "{tab_ahu_charts_ahu_param}"
-    # '''
-    # ahu_chart_df = fb.read_bq(bq_client, 'charts.ahus', where_cond)
-    #
-    # cha.run_flow_charts(ahu_chart_df,
-    #                     st.session_state.chart_ahu_raw_data,
-    #                     site_dict['AHU_chart_cols'], col2_AHU_charts)
+    # consumption
+    cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
+                                       tab_consumpt_time_param, tab_consumpt_agg_param)
+    cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
+    if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
+        col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
+    else:
+        chart = cons.chart_df(cons_df_metric, tab_consumpt_data_param, tab_consumpt_agg_param, tab_consumpt_metric_param)
+        col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
+
+
+    # Heatmaps
+    times.log(f'loading file heatmaps between {(times.utc_now() - timedelta(days=7)).strftime("%Y-%m-%d")} AND {date_yesterday.strftime("%Y-%m-%d")}')
+    site_dict = cnf.sites_dict[tab_hmaps_building_param]
+    param_dict = cnf.data_param_dict[tab_hmaps_data_param]
+    agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
+
+    query = f'''
+        SELECT
+            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
+            floor,
+            room,
+            AVG(parameter_value) AS parameter_value
+        FROM heatmaps.heatmaps
+        WHERE
+            Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
+            AND building = "{tab_hmaps_building_param}"
+            AND data_param = "{param_dict['bq_field']}"
+        GROUP BY
+            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}"),
+            floor,
+            room
+    '''
+    hmp_df = fb.send_bq_query(bq_client, query)
+    for floor in site_dict['floors_order']:
+        hmp_df_floor = hmap.pivot_df(hmp_df, floor, agg_param_dict['aggregation_field_name'])
+        hmap.plot_heatmap(df=hmp_df_floor,
+                          fmt=param_dict['fmt'],
+                          title=floor,
+                          xlabel=agg_param_dict['aggregation_field_name'],
+                          ylabel="Rooms",
+                          scale=cnf.hmaps_figure_memory_scale,
+                          col=col2_rooms_hmaps)
+
+    # Room charts
+    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # TODO: move the below loops and concatenation into transfer process
+    site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
+    where_cond = f''' WHERE
+        Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
+        AND building = "{tab_rooms_charts_building_param}"
+        AND room = "{tab_rooms_charts_room_param}"
+    '''
+    rooms_chart_df = fb.read_bq(bq_client, 'charts.rooms', where_cond)
+    cha.run_flow_charts(rooms_chart_df,
+                        st.session_state.chart_rooms_raw_data,
+                        site_dict['rooms_chart_cols'], col2_rooms_charts)
+
+    # AHU charts
+    # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
+    # TODO: move the below loops and concatenation into transfer process
+    site_dict = cnf.sites_dict[tab_ahu_charts_building_param]
+    where_cond = f''' WHERE
+        Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
+        AND building = "{tab_ahu_charts_building_param}"
+        AND ahu = "{tab_ahu_charts_ahu_param}"
+    '''
+    ahu_chart_df = fb.read_bq(bq_client, 'charts.ahus', where_cond)
+
+    cha.run_flow_charts(ahu_chart_df,
+                        st.session_state.chart_ahu_raw_data,
+                        site_dict['AHU_chart_cols'], col2_AHU_charts)
 
     # expers
     # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
@@ -176,15 +176,15 @@ def main():
         select *
         from
         (
-        SELECT DATE_TRUNC(timestamp, HOUR) as timestamp, 
-              floor, 
+        SELECT DATE_TRUNC(timestamp, HOUR) as timestamp,
+              floor,
               avg(average_room_temperature) as average_room_temperature,
               avg(cooling_temperature_setpoint) as cooling_temperature_setpoint,
               avg(heating_temperature_setpoint) as heating_temperature_setpoint,
               avg(IF(percentage_of_ac_usage, 1 ,0)) as percentage_of_ac_usage,
               --avg(outside_temperature) as outside_temperature,
               COUNT(DISTINCT room) as rooms_count
-        FROM `amro-partners.experiments.rooms` 
+        FROM `amro-partners.experiments.rooms`
         WHERE timestamp BETWEEN "{start_date.strftime("%Y-%m-%d %H:%M:%S")}" AND "{end_date.strftime("%Y-%m-%d %H:%M:%S")}"
         AND experiment_name = "{tab_exper_exp_param}"
         group by DATE_TRUNC(timestamp, HOUR), floor
