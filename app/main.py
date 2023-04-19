@@ -111,19 +111,19 @@ def main():
     agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
 
     query = f'''
-        SELECT 
+        SELECT
             EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
-            floor, 
-            room, 
+            floor,
+            room,
             AVG(parameter_value) AS parameter_value
         FROM heatmaps.heatmaps
-        WHERE 
+        WHERE
             Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
             AND building = "{tab_hmaps_building_param}"
             AND data_param = "{param_dict['bq_field']}"
-        GROUP BY 
+        GROUP BY
             EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}"),
-            floor, 
+            floor,
             room
     '''
     hmp_df = fb.send_bq_query(bq_client, query)
@@ -176,15 +176,15 @@ def main():
         select *
         from
         (
-        SELECT DATE_TRUNC(timestamp, HOUR) as timestamp, 
-              floor, 
+        SELECT DATE_TRUNC(timestamp, HOUR) as timestamp,
+              floor,
               avg(average_room_temperature) as average_room_temperature,
               avg(cooling_temperature_setpoint) as cooling_temperature_setpoint,
               avg(heating_temperature_setpoint) as heating_temperature_setpoint,
               avg(IF(percentage_of_ac_usage, 1 ,0)) as percentage_of_ac_usage,
               --avg(outside_temperature) as outside_temperature,
               COUNT(DISTINCT room) as rooms_count
-        FROM `amro-partners.experiments.rooms` 
+        FROM `amro-partners.experiments.rooms`
         WHERE timestamp BETWEEN "{start_date.strftime("%Y-%m-%d %H:%M:%S")}" AND "{end_date.strftime("%Y-%m-%d %H:%M:%S")}"
         AND experiment_name = "{tab_exper_exp_param}"
         group by DATE_TRUNC(timestamp, HOUR), floor

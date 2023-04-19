@@ -28,6 +28,17 @@ sites_dict = {
                            'Supply Running'],
         'floors_col': 'Title'
     },
+    # "Amro Valencia": {
+    #     'time_zone': 'Europe/Madrid',
+    #     'rooms_file': "rooms_codes_valencia.csv",
+    #     'vent_file': 'vent_codes_valencia.csv',
+    #     'floors_order': ["Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4", "Planta 5",  "Planta 6"],
+    #     'AHU_units': ['CL01', 'CL02', 'CL03'],
+    #     'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
+    #                          (), 'Percentage of A/C usage (%)'],
+    #     #'AHU_chart_cols': [] #[('Outside temperature (°C)'), ('Ventilation rate supply', 'Ventilation rate return'), ()],
+    #     'floors_col': 'Title'
+    # },
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
@@ -162,9 +173,9 @@ exp_dict = {
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2022, 12, 2, 12, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': datetime(2022, 12, 31, 0, 0),  # times.utc_now(),
-        'calibration_days': 5,
+        'start_exp_date_utc': datetime(2022, 12, 1, 0, 0),
+        'end_exp_date_utc': datetime(2023, 1, 10, 0, 0),
+        'calibration_days': 0,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
     },
@@ -173,31 +184,9 @@ exp_dict = {
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2022, 11, 29, 0, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': datetime(2022, 12, 31, 0, 0),  # times.utc_now(),
-        'calibration_days': 5,
-        'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.259
-    },
-    "Amro Seville tenants temp set points auto reset - winter": {
-        'time_zone': 'Europe/Madrid',
-        'groups_order': ['Control',
-                         'Test'],
-        'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 7,
-        'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.259
-    },
-    "Amro Seville tenants temp set points auto reset - prediction, winter": {
-        'time_zone': 'Europe/Madrid',
-        'groups_order': ['Control',
-                         'Test'],
-        'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  #(times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 7,
+        'start_exp_date_utc': datetime(2022, 11, 29, 0, 0),
+        'end_exp_date_utc': datetime(2023, 1, 10, 0, 0),
+        'calibration_days': 4,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
     },
@@ -212,12 +201,45 @@ exp_dict = {
         'market_based_electricity_cost': 0.1425,
         'location_based_co2': 0.259
     },
-    "Amro Seville tenants temp set points to 18C": {
+    "Amro Seville adaptive ventilation speed CL01": {
         'time_zone': 'Europe/Madrid',
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 3, 23, 16, 0),
+        'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
+        'end_exp_date_utc': times.utc_now(),
+        'calibration_days': 5,
+        'market_based_electricity_cost': 0.370,
+        'location_based_co2': 0.259
+    },
+    "Amro Seville ventilation temp CL02": {
+        'time_zone': 'Europe/Madrid',
+        'groups_order': ['Control',
+                         'Test'],
+        'group_col': 'Group',
+        'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
+        'end_exp_date_utc': times.utc_now(),
+        'calibration_days': 5,
+        'market_based_electricity_cost': 0.370,
+        'location_based_co2': 0.259
+    },
+    "Amro Seville tenants cooling temp set points": {
+        'time_zone': 'Europe/Madrid',
+        'groups_order': ['Control',
+                         'Test'],
+        'group_col': 'Group',
+        'start_exp_date_utc': datetime(2023, 4, 6, 16, 0),
+        'end_exp_date_utc': times.utc_now(),
+        'calibration_days': 7,
+        'market_based_electricity_cost': 0.370,
+        'location_based_co2': 0.259
+    },
+    "Amro Seville tenants temp cooling set points - based on predicted temperatures": {
+        'time_zone': 'Europe/Madrid',
+        'groups_order': ['Control',
+                         'Test'],
+        'group_col': 'Group',
+        'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),
         'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,

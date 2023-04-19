@@ -12,7 +12,12 @@ import pytz
 
 
 def set_params_exp(col1, col2):
-    exp_param = col1.radio('Select Flight', cnf.exp_dict, key='exp_building')
+    sorted_experiments = dict(sorted({k: v for k, v in cnf.exp_dict.items()}.items(),
+                                     key=lambda item: item[1]['start_exp_date_utc'],
+                                     reverse=True)).keys()
+    exp_param = col1.radio('Select Flight', sorted_experiments, key='exp_building',
+                           format_func=lambda x: x + " [completed]" if cnf.exp_dict[x]['end_exp_date_utc']
+                                                                       < (times.utc_now() - timedelta(hours=1)) else x)
     metric_param = col1.radio('Select chart metric',  cnf.metrics, key='exp_chart_metric')
     agg_param = col1.radio('Select chart frequency',  cnf.time_agg_dict.keys(), key='exp_chart_freq')
     raw_data = col2.checkbox("Show raw data", value=False, key="exp_raw_data")
@@ -158,32 +163,31 @@ def show_summary_tables(_test_dict, _control_dict, _col, exp_param):
                               cnf.control_group: _control_dict[cnf.num_rooms_name]},
                              index=[cnf.num_rooms_name])  # First row with number of rooms
 
+    if flight_duration_pre.days > 0:
     # The rest of the metrics pre-starting the experiment
-    summary_df_pre = get_exp_summary_df(_test_dict[cnf.avg_pre_df_name],
-                                        _control_dict[cnf.avg_pre_df_name])
+        summary_df_pre = get_exp_summary_df(_test_dict[cnf.avg_pre_df_name],
+                                            _control_dict[cnf.avg_pre_df_name])
+        summary_df_pre = pd.concat([first_row, summary_df_pre])
+        _col.subheader('Pre-experiment calibration period')
+        _col.text(f'Pre-experiment calibration duration: {start_calibration_date_utc} - {start_exp_date_utc} '
+                  f'({flight_duration_pre.days} days) ')
+        _col.table(utl.format_row_wise(summary_df_pre, cnf.formatters))
+
     # The rest of the metrics post-starting the experiment
     summary_df_post = get_exp_summary_df(_test_dict[cnf.avg_post_df_name],
                                          _control_dict[cnf.avg_post_df_name])
-
-    summary_df_pre = pd.concat([first_row, summary_df_pre])
     summary_df_post = pd.concat([first_row, summary_df_post])
-
-    _col.subheader('Pre-experiment calibration period')
-    _col.text(f'Pre-experiment calibration duration: {start_calibration_date_utc} - {start_exp_date_utc} '
-              f'({flight_duration_pre.days} days) ')
-    _col.table(utl.format_row_wise(summary_df_pre, cnf.formatters))
-
-    title, intro, body = utl.info(flight_duration_post,
-                                    exp_param,
-                                    exp_dict['market_based_electricity_cost'],
-                                    exp_dict['location_based_co2'])
-
     _col.subheader('A/B testing period')
     _col.text(f'Flight duration: {start_exp_date_utc} - {end_exp_date_utc} '
               f'({flight_duration_post.days} days '
               f'{flight_duration_post.seconds // 3600} hours '
               f'{flight_duration_post.seconds%3600//60} minutes)')
     _col.table(utl.format_row_wise(summary_df_post, cnf.formatters))
+
+    title, intro, body = utl.info(flight_duration_post,
+                                    exp_param,
+                                    exp_dict['market_based_electricity_cost'],
+                                    exp_dict['location_based_co2'])
     _col.expander(title, expanded=False).write(f'{intro[1]}\n{body}')
 
 
@@ -205,7 +209,7 @@ def chart_df(metric_df, exp_param, metric_param):
     domain = [c.split('_')[-1] for c in metric_df.columns]
 
     chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=f'{exp_param}: Comparison of Test and Control groups').mark_line().encode(
-        x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False)),
+        x=alt.X('Time', axis=alt.Axis(title='Date', format="%Y-%m-%d", tickColor='white', grid=False, domain=False)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=alt.Color('variable',
                         legend=alt.Legend(labelFontSize=14, direction='horizontal', titleAnchor='middle',
