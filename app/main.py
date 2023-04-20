@@ -93,7 +93,7 @@ def main():
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
      col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param) = set_homepage()  # Get choice of building
 
-    # consumption
+    # # consumption
     cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
                                        tab_consumpt_time_param, tab_consumpt_agg_param)
     cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
@@ -182,6 +182,18 @@ def main():
               avg(cooling_temperature_setpoint) as cooling_temperature_setpoint,
               avg(heating_temperature_setpoint) as heating_temperature_setpoint,
               avg(IF(percentage_of_ac_usage, 1 ,0)) as percentage_of_ac_usage,
+              avg(
+                IF(percentage_of_ac_usage,
+                    IF(timestamp>"2023-03-01",
+                        IF(cooling_temperature_setpoint<average_room_temperature, 
+                            1,
+                            0
+                        ),
+                        1
+                    ),
+                    0
+                )
+            ) as percentage_of_refrigerant_usage,
               --avg(outside_temperature) as outside_temperature,
               COUNT(DISTINCT room) as rooms_count
         FROM `amro-partners.experiments.rooms`
@@ -199,6 +211,13 @@ def main():
     if (len(control_dict['summary avg post']) == 0) or (len(test_dict['summary avg post']) == 0):
         col2_exper.header("Not enough data to show results yet.")
     else:
+        if 'ventilation' in tab_exper_exp_param or 'cooling' in tab_exper_exp_param:
+            # A horrible hack to deal with cases of very different distributions
+            scaling_factors = test_dict['summary avg pre'].mean() / control_dict['summary avg pre'].mean()
+            control_dict['summary avg'] = control_dict['summary avg'] * scaling_factors
+            control_dict['summary avg pre'] = control_dict['summary avg pre'] * scaling_factors
+            control_dict['summary avg post'] = control_dict['summary avg post'] * scaling_factors
+
         # get selected metric summarised in a compact df
         metric_df = exp.get_selected_metric_df(test_dict, control_dict, tab_exper_exp_param,
                                                tab_exper_metric_param, tab_exper_agg_param)

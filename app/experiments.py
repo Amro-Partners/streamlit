@@ -35,8 +35,8 @@ def avg_all_rooms(df_dict_room):
 def get_exp_metrics(df_sum, flight_duration, exp_dict):
     # TODO: improve this formula once we store consumption with transform repo
     # 3.42 - avg daily total VRV consumption per room (external units included)
-    df_sum[cnf.elect_consump_name] = ((3.42 / 0.1 / (24 * 4)) * flight_duration.days
-                                      * df_sum[cnf.ac_usage_name])
+    df_sum[cnf.elect_consump_name] = ((3.42 / df_sum[cnf.ref_usage_name].mean() / (24 * 4)) * flight_duration.days
+                                      * df_sum[cnf.ref_usage_name])
     df_sum[cnf.elect_cost_name] = exp_dict['market_based_electricity_cost'] * df_sum[cnf.elect_consump_name]
     df_sum[cnf.elect_carbon_name] = exp_dict['location_based_co2'] * df_sum[cnf.elect_consump_name]
     return df_sum
@@ -163,26 +163,32 @@ def show_summary_tables(_test_dict, _control_dict, _col, exp_param):
                               cnf.control_group: _control_dict[cnf.num_rooms_name]},
                              index=[cnf.num_rooms_name])  # First row with number of rooms
 
-    if flight_duration_pre.days > 0:
-    # The rest of the metrics pre-starting the experiment
-        summary_df_pre = get_exp_summary_df(_test_dict[cnf.avg_pre_df_name],
-                                            _control_dict[cnf.avg_pre_df_name])
-        summary_df_pre = pd.concat([first_row, summary_df_pre])
-        _col.subheader('Pre-experiment calibration period')
-        _col.text(f'Pre-experiment calibration duration: {start_calibration_date_utc} - {start_exp_date_utc} '
-                  f'({flight_duration_pre.days} days) ')
-        _col.table(utl.format_row_wise(summary_df_pre, cnf.formatters))
+    # if flight_duration_pre.days > 0:
+    # # The rest of the metrics pre-starting the experiment
+    #     summary_df_pre = get_exp_summary_df(_test_dict[cnf.avg_pre_df_name],
+    #                                         _control_dict[cnf.avg_pre_df_name])
+    #     summary_df_pre = pd.concat([first_row, summary_df_pre])
+    #     _col.subheader('Pre-experiment calibration period')
+    #     _col.text(f'Pre-experiment calibration duration: {start_calibration_date_utc} - {start_exp_date_utc} '
+    #               f'({flight_duration_pre.days} days) ')
+    #     _col.table(utl.format_row_wise(summary_df_pre, cnf.formatters))
 
     # The rest of the metrics post-starting the experiment
     summary_df_post = get_exp_summary_df(_test_dict[cnf.avg_post_df_name],
                                          _control_dict[cnf.avg_post_df_name])
     summary_df_post = pd.concat([first_row, summary_df_post])
+
+    exp_kwh_monthly = round(-summary_df_post.loc['Average room electricity consumption (kWh)']['Difference']
+                       * 30 / flight_duration_post.days
+                       * 329 / summary_df_post.loc['Number of rooms']['Test'], 2)
+
     _col.subheader('A/B testing period')
+    _col.text(f'Expected monthly savings: {exp_kwh_monthly} kWh')
     _col.text(f'Flight duration: {start_exp_date_utc} - {end_exp_date_utc} '
               f'({flight_duration_post.days} days '
               f'{flight_duration_post.seconds // 3600} hours '
               f'{flight_duration_post.seconds%3600//60} minutes)')
-    _col.table(utl.format_row_wise(summary_df_post, cnf.formatters))
+    _col.table(utl.format_row_wise(summary_df_post.loc[cnf.formatters.keys()], cnf.formatters))
 
     title, intro, body = utl.info(flight_duration_post,
                                     exp_param,

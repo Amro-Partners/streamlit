@@ -85,6 +85,11 @@ data_param_dict = {
         'bq_field': 'percentage_of_ac_usage',
         'fmt': '0.0%'
     },
+    'Percentage of Refrig. usage (%)': {
+        'show_per_room': True,
+        'bq_field': 'percentage_of_refrigerant_usage',
+        'fmt': '0.0%'
+    },
     'Outside temperature (°C)': {
         'show_per_room': True,
         'bq_field': 'outside_temperature',
@@ -195,7 +200,7 @@ exp_dict = {
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 3, 14, 10, 0),  # (times.utc_now() - timedelta(days=1)),  #
+        'start_exp_date_utc': datetime(2023, 3, 21, 10, 0),  # (times.utc_now() - timedelta(days=1)),  #
         'end_exp_date_utc': times.utc_now(),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.1425,
@@ -208,7 +213,7 @@ exp_dict = {
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
         'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 5,
+        'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
     },
@@ -219,7 +224,7 @@ exp_dict = {
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
         'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 5,
+        'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
     },
@@ -265,6 +270,7 @@ room_temp_name = "Avg. room temperature (°C)"  # avg. room temperature
 cool_temp_setpoint_name = 'Cooling temperature set point (°C)'
 heat_temp_setpoint_name = 'Heating temperature set point (°C)'
 ac_usage_name = 'Percentage of A/C usage (%)'
+ref_usage_name = 'Percentage of Refrig. usage (%)'
 elect_consump_name = 'Average room electricity consumption (kWh)'  # number of rooms across the group
 elect_cost_name = 'Average room electricity cost (€) (ex. VAT)'  # number of rooms across the group
 elect_carbon_name = 'Average room carbon footprint (kg CO2)'  # number of rooms across the group
