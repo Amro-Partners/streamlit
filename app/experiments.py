@@ -180,7 +180,7 @@ def show_summary_tables(_test_dict, _control_dict, _col, exp_param):
 
     exp_kwh_monthly = round(-summary_df_post.loc['Average room electricity consumption (kWh)']['Difference']
                        * 30 / flight_duration_post.days
-                       * 329 / summary_df_post.loc['Number of rooms']['Test'], 2)
+                       * 400, 2)
 
     _col.subheader('A/B testing period')
     _col.text(f'Expected monthly savings: {exp_kwh_monthly} kWh')

@@ -211,7 +211,7 @@ def main():
     if (len(control_dict['summary avg post']) == 0) or (len(test_dict['summary avg post']) == 0):
         col2_exper.header("Not enough data to show results yet.")
     else:
-        if 'ventilation' in tab_exper_exp_param or 'cooling' in tab_exper_exp_param:
+        if 'ventilation' in tab_exper_exp_param or 'cooling' in tab_exper_exp_param or 'shutdown' in tab_exper_exp_param:
             # A horrible hack to deal with cases of very different distributions
             scaling_factors = test_dict['summary avg pre'].mean() / control_dict['summary avg pre'].mean()
             control_dict['summary avg'] = control_dict['summary avg'] * scaling_factors
