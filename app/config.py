@@ -28,17 +28,17 @@ sites_dict = {
                            'Supply Running'],
         'floors_col': 'Title'
     },
-    # "Amro Valencia": {
-    #     'time_zone': 'Europe/Madrid',
-    #     'rooms_file': "rooms_codes_valencia.csv",
-    #     'vent_file': 'vent_codes_valencia.csv',
-    #     'floors_order': ["Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4", "Planta 5",  "Planta 6"],
-    #     'AHU_units': ['CL01', 'CL02', 'CL03'],
-    #     'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
-    #                          (), 'Percentage of A/C usage (%)'],
-    #     #'AHU_chart_cols': [] #[('Outside temperature (°C)'), ('Ventilation rate supply', 'Ventilation rate return'), ()],
-    #     'floors_col': 'Title'
-    # },
+    "Amro Valencia": {
+        'time_zone': 'Europe/Madrid',
+        'rooms_file': "rooms_codes_valencia.csv",
+        'vent_file': 'vent_codes_valencia.csv',
+        'floors_order': ["Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4", "Planta 5",  "Planta 6"],
+        'AHU_units': ['CL01', 'CL02', 'CL03'],
+        'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
+                             (), 'Percentage of A/C usage (%)'],
+        #'AHU_chart_cols': [] #[('Outside temperature (°C)'), ('Ventilation rate supply', 'Ventilation rate return'), ()],
+        'floors_col': 'Title'
+    },
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",

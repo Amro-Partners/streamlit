@@ -10,26 +10,34 @@ import times
 
 def set_params_consumpt(col1, col2):
     building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
-    min_time = (times.utc_now() - timedelta(days=90)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    max_time = (times.utc_now() - timedelta(days=1)).replace(hour=0, minute=15, second=0, microsecond=0)
-    time_param = col1.slider('Select date range',
-                             min_value=min_time,
-                             max_value=max_time,
-                             value=(min_time, max_time),
-                             key='consump_time')
     metric_param = col1.radio('Select metric',
                               ['Elect. consumption (kWh)', 'Floor area elect. consumption (kWh/m2)',
                                'Per bed elect. consumption (kWh)', 'GHG emission (kgCO2e)',
                                'GHG emission intensity (kgCO2e/m2)', 'Per bed GHG emission (kgCO2e)'],
                               key='consump_metric')
+    agg_param = col1.radio('Group by', cnf.consumpt_agg_param_dict.keys(), key='consump_agg')
+    min_time = (times.utc_now() - timedelta(days=90)).replace(hour=0, minute=0, second=0, microsecond=0)
+    max_time = times.utc_now()
+    if agg_param == 'Month':
+        min_time = min_time.replace(day=1)
+        max_time = max_time.replace(day=1)
+    elif agg_param == "Week":
+        min_time = min_time - timedelta(days=min_time.weekday())
+        max_time = max_time - timedelta(days=max_time.weekday())
+
+    max_time = (max_time - timedelta(days=1)).replace(hour=23, minute=59, second=59)
+
+    time_param = col1.slider('Select date range',
+                             min_value=min_time,
+                             max_value=max_time,
+                             value=(min_time, max_time),
+                             key='consump_time')
     data_param_list = (['Floors 1-8', 'AHUs', 'Climatization', 'Floor S', 'Floor B', 'Thermal stores', 'Clusters',
                         'In-rooms VRV fans', 'External VRV units', 'In-rooms external VRV units',
                         'Total in-rooms VRV', 'HVAC energy consumption']
                        + sorted([key for key in rooms.read_consumption_codes('consumption_codes_seville.csv').values()]))
-
-    agg_param = col1.radio('Group by', cnf.consumpt_agg_param_dict.keys(), key='consump_agg')
-    raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
     data_param = col1.multiselect('Select data', data_param_list, default='Building energy consumption', key='consump_data')
+    raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
     return building_param, time_param, agg_param, metric_param, data_param, raw_data
 
 
@@ -42,7 +50,7 @@ def pull_consumption_data(_db, building_param, t_min, t_max):
     # print the difference in Kwh to get actual electricity consumption
     df = pd.DataFrame([s.to_dict() for s in doc_consumpt]).set_index('datetime')
     df.index = pd.to_datetime(df.index)
-    df = df.groupby(pd.Grouper(freq='D')).max()
+    #df = df.groupby(pd.Grouper(freq='D')).max()
     #df.index = pd.to_datetime(df.index).round('15min')
 
     # remove unnecessary fields
@@ -88,13 +96,13 @@ def pull_consumption_data(_db, building_param, t_min, t_max):
 @st.cache_data(show_spinner=False)
 def consumption_summary(_db, building_param, time_param, agg_param):
     building_dict = cnf.sites_dict[building_param]
+    time_zone = building_dict['time_zone']
 
     # Choose start date and an end date for the analysis
     t_min = times.convert_datetime_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
-    t_max = times.convert_datetime_to_string(times.local_to_utc(time_param[1] + timedelta(days=1), building_dict['time_zone'], timezone.utc))
+    t_max = times.convert_datetime_to_string(times.local_to_utc(time_param[1], time_zone, timezone.utc))
 
     df_diff = pull_consumption_data(_db, building_param, t_min, t_max)
-    time_zone = cnf.sites_dict[building_param]['time_zone']
     df_diff = times.groupby_date_vars(df_diff,
                                       cnf.consumpt_agg_param_dict[agg_param],
                                       to_zone=time_zone).agg(cnf.consumpt_agg_param_dict[agg_param]['agg_func'])
