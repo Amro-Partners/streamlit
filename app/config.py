@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import datetime
 import numpy as np
 import times
 
@@ -9,6 +9,14 @@ cert_file = "amro-partners-firebase-adminsdk-syddx-7de4edb3c4.json"  # certifica
 bq_cert_file = "amro-partners-f2967e9bb3a0.json"
 storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
+
+
+# BQ tables
+table_heatmaps = 'test_heatmaps.heatmaps'
+table_charts_rooms = 'test_charts.rooms'
+table_charts_ahus = 'test_charts.ahus'
+table_exp_rooms = 'test_experiments.rooms'
+
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
 tabs_space = [2.5, 0.5, 6, 1]
@@ -201,7 +209,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 3, 21, 10, 0),  # (times.utc_now() - timedelta(days=1)),  #
-        'end_exp_date_utc': times.utc_now(),
+        'end_exp_date_utc': datetime(2023, 4, 25, 0, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.1425,
         'location_based_co2': 0.259
@@ -212,7 +220,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': times.utc_now(),
+        'end_exp_date_utc': datetime(2023, 4, 25, 0, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -223,7 +231,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),  # (times.utc_now() - timedelta(days=7)),  #
-        'end_exp_date_utc': times.utc_now(),
+        'end_exp_date_utc': datetime(2023, 4, 25, 0, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -234,7 +242,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 6, 16, 0),
-        'end_exp_date_utc': times.utc_now(),
+        'end_exp_date_utc': datetime(2023, 4, 25, 0, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
@@ -245,7 +253,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 4, 11, 16, 0),
-        'end_exp_date_utc': times.utc_now(),
+        'end_exp_date_utc': datetime(2023, 4, 25, 0, 0),
         'calibration_days': 7,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259
