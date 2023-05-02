@@ -1,7 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-import times
 import config as cnf
 from datetime import timedelta
 import streamlit as st
@@ -12,17 +11,24 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 @st.cache_data(show_spinner=False)
+def float2bool(col):
+    return col == 1
+
+
+@st.cache_data(show_spinner=False)
 def create_start_end_times(onoff_col, timestamp_col):
-    onoff_col = onoff_col.fillna(value=False)
+    onoff_col = onoff_col.fillna(value=1.0)
     start_on_times = []
     end_on_times = []
-    if onoff_col.iloc[0] in (True, False) and onoff_col.iloc[0]:
+    if onoff_col.iloc[0] in (0, 1) and onoff_col.iloc[0]:
         start_on_times += [list(timestamp_col)[0]]
-    if onoff_col.iloc[-1] in (True, False) and onoff_col.iloc[-1]:
+    if onoff_col.iloc[-1] in (0, 1) and onoff_col.iloc[-1]:
         end_on_times += [list(timestamp_col)[-1]]
 
-    start_on_times = start_on_times + list(timestamp_col[onoff_col & ~onoff_col.shift(1).fillna(value=True)])
-    end_on_times = list(timestamp_col[onoff_col & ~onoff_col.shift(-1).fillna(value=True)]) + end_on_times
+    start_on_times = start_on_times + list(timestamp_col[float2bool(onoff_col) &
+                                                         ~float2bool(onoff_col.shift(1).fillna(value=1))])
+    end_on_times = list(timestamp_col[float2bool(onoff_col) &
+                                      ~float2bool(onoff_col.shift(-1).fillna(value=True))]) + end_on_times
     start_on_times = [t - timedelta(minutes=7.5) for t in start_on_times]
     end_on_times = [t + timedelta(minutes=7.5) for t in end_on_times]
     return pd.DataFrame({'start_on_times': start_on_times, 'end_on_times': end_on_times})

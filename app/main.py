@@ -116,7 +116,7 @@ def main():
             floor,
             room,
             AVG(parameter_value) AS parameter_value
-        FROM heatmaps.heatmaps
+        FROM {cnf.table_heatmaps}
         WHERE
             Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
             AND building = "{tab_hmaps_building_param}"
@@ -146,7 +146,7 @@ def main():
         AND building = "{tab_rooms_charts_building_param}"
         AND room = "{tab_rooms_charts_room_param}"
     '''
-    rooms_chart_df = fb.read_bq(bq_client, 'charts.rooms', where_cond)
+    rooms_chart_df = fb.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
     cha.run_flow_charts(rooms_chart_df,
                         st.session_state.chart_rooms_raw_data,
                         site_dict['rooms_chart_cols'], col2_rooms_charts)
@@ -160,7 +160,7 @@ def main():
         AND building = "{tab_ahu_charts_building_param}"
         AND ahu = "{tab_ahu_charts_ahu_param}"
     '''
-    ahu_chart_df = fb.read_bq(bq_client, 'charts.ahus', where_cond)
+    ahu_chart_df = fb.read_bq(bq_client, cnf.table_charts_ahus, where_cond)
 
     cha.run_flow_charts(ahu_chart_df,
                         st.session_state.chart_ahu_raw_data,
@@ -181,11 +181,11 @@ def main():
               avg(average_room_temperature) as average_room_temperature,
               avg(cooling_temperature_setpoint) as cooling_temperature_setpoint,
               avg(heating_temperature_setpoint) as heating_temperature_setpoint,
-              avg(IF(percentage_of_ac_usage, 1 ,0)) as percentage_of_ac_usage,
+              avg(IF(percentage_of_ac_usage=1, 1 ,0)) as percentage_of_ac_usage,
               avg(
-                IF(percentage_of_ac_usage,
+                IF(percentage_of_ac_usage=1,
                     IF(timestamp>"2023-03-01",
-                        IF(cooling_temperature_setpoint<average_room_temperature, 
+                        IF(cooling_temperature_setpoint<average_room_temperature,
                             1,
                             0
                         ),
@@ -196,7 +196,7 @@ def main():
             ) as percentage_of_refrigerant_usage,
               --avg(outside_temperature) as outside_temperature,
               COUNT(DISTINCT room) as rooms_count
-        FROM `amro-partners.experiments.rooms`
+        FROM {cnf.table_exp_rooms}
         WHERE timestamp BETWEEN "{start_date.strftime("%Y-%m-%d %H:%M:%S")}" AND "{end_date.strftime("%Y-%m-%d %H:%M:%S")}"
         AND experiment_name = "{tab_exper_exp_param}"
         group by DATE_TRUNC(timestamp, HOUR), floor
