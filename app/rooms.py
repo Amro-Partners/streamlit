@@ -4,12 +4,6 @@ import pandas as pd
 
 
 @st.cache_data(show_spinner=False)
-def read_consumption_codes(consumption_codes_file):
-    path = os.path.dirname(__file__)
-    return pd.read_csv(os.path.join(path, consumption_codes_file), encoding='latin-1').set_index('ADDRESS')['Title'].to_dict()
-
-
-@st.cache_data(show_spinner=False)
 def get_ahu_dict(ahu_codes_file):
     path = os.path.dirname(__file__)
     return pd.read_csv(os.path.join(path, ahu_codes_file), encoding='latin-1').set_index('Title')['UNIT'].to_dict()

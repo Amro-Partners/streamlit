@@ -1,8 +1,6 @@
-from datetime import timedelta, timezone
-import pandas as pd
+from datetime import timedelta
 import altair as alt
 import streamlit as st
-from firebase_admin import firestore
 import config as cnf
 import rooms
 import times
@@ -26,106 +24,35 @@ def set_params_consumpt(col1, col2):
         max_time = max_time - timedelta(days=max_time.weekday())
 
     max_time = (max_time - timedelta(days=1)).replace(hour=23, minute=59, second=59)
-
     time_param = col1.slider('Select date range',
                              min_value=min_time,
                              max_value=max_time,
                              value=(min_time, max_time),
                              key='consump_time')
-    data_param_list = (['Floors 1-8', 'AHUs', 'Climatization', 'Floor S', 'Floor B', 'Thermal stores', 'Clusters',
-                        'In-rooms VRV fans', 'External VRV units', 'In-rooms external VRV units',
-                        'Total in-rooms VRV', 'HVAC energy consumption']
-                       + sorted([key for key in rooms.read_consumption_codes('consumption_codes_seville.csv').values()]))
+    data_param_list = get_data_param_list(building_param, time_param)
     data_param = col1.multiselect('Select data', data_param_list, default='Building energy consumption', key='consump_data')
+    data_param += ['outdoor temperature']
     raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
-    return building_param, time_param, agg_param, metric_param, data_param, raw_data
+    return building_param, time_param, agg_param, metric_param, data_param
 
 
 @st.cache_data(show_spinner=False)
-def pull_consumption_data(_db, building_param, t_min, t_max):
-    doc_consumpt = (_db.collection(u'BMS_Seville_Consumos_Electricidad2')
-           .where('datetime', '>=', t_min).where('datetime', '<', t_max).
-           order_by('datetime', direction=firestore.Query.ASCENDING)).stream()
-
-    # print the difference in Kwh to get actual electricity consumption
-    df = pd.DataFrame([s.to_dict() for s in doc_consumpt]).set_index('datetime')
-    df.index = pd.to_datetime(df.index)
-    #df = df.groupby(pd.Grouper(freq='D')).max()
-    #df.index = pd.to_datetime(df.index).round('15min')
-
-    # remove unnecessary fields
-    drop_cols = []
-    for col in df.columns:
-        if ('_W_S' in col) or ('ModbusMaster' in col) or ('Potencia' in col) or ('Porcentaj'  in col):
-            drop_cols += [col]
-
-    df.drop(columns=drop_cols, inplace=True)
-
-    title_dict = rooms.read_consumption_codes('consumption_codes_seville.csv')
-    new_cols = []
-    for col in df.columns:
-        if title_dict.get(col):
-            new_cols += [title_dict.get(col)]
-        else:
-            new_cols += [col]
-    df.columns = new_cols
-
-    df['Floors 1-8'] = (df['Floor 1 total'] + df['Floor 2 total'] + df['Floor 3 total'] + df['Floor 4 total']
-                              + df['Floor 5 total'] + df['Floor 6 total'] + df['Floor 7 total'] + df['Floor 8 total'])
-    df['AHUs'] = df['Floor 9 CL01'] + df['Floor 9 CL02'] + df['Floor 9 CL03']
-    df['Climatization'] = df['Floor 9 Climatization']
-    df['Floor S'] = (df['Floor S Laundry'] + df['Floor S generator set'] + df['Floor S Lift 1']
-                            + df['Floor S Lift 1'] + df['Floor S Lift 2'] + df['Floor S Lift 3'] + df['Floor S Lift 4'])
-    df['Floor B'] = (df['Floor B Lobby'] + df['Floor B Cefeteria'] + df['Floor B Cookers'] + df['Floor B Kitchen'])
-    df['Thermal stores'] = df['Floor 9 QTON themral store'] + df['Floor 9 Aerotermia themral store']
-    df['Clusters'] = (df['Floor 1 Cluster 1'] + df['Floor 1 Cluster 2'] + df['Floor 2 Cluster 1'] + df['Floor 2 Cluster 2']
-                            + df['Floor 3 Cluster 1'] + df['Floor 3 Cluster 2'] + df['Floor 4 Cluster 1'] + df['Floor 4 Cluster 2']
-                            + df['Floor 5 Cluster 1'] + df['Floor 5 Cluster 2'] + df['Floor 6 Cluster 1'] + df['Floor 6 Cluster 2']
-                            + df['Floor 7 Cluster 1'] + df['Floor 7 Cluster 2'] + df['Floor 8 Cluster 1'] + df['Floor 8 Cluster 2'])
-    df['In-rooms VRV fans'] = df['Floors 1-8'] - df['Clusters']
-    df['External VRV units'] = df['Climatization'] - df['Thermal stores'] - df['AHUs']
-    df['In-rooms external VRV units'] = df['External VRV units'] * (0.555 + 0.301)
-    df['Total in-rooms VRV'] = df['In-rooms VRV fans'] + df['External VRV units']
-    df['HVAC energy consumption'] = df['AHUs'] + df['In-rooms VRV fans'] + df['External VRV units']
-
-    df = df.reindex(sorted(df.columns), axis=1)
-    df_diff = df.diff().round(decimals=2).shift(-1).iloc[:-1]
-    return df_diff
-
-
-@st.cache_data(show_spinner=False)
-def consumption_summary(_db, building_param, time_param, agg_param):
-    building_dict = cnf.sites_dict[building_param]
-    time_zone = building_dict['time_zone']
-
-    # Choose start date and an end date for the analysis
-    t_min = times.convert_datetime_to_string(times.local_to_utc(time_param[0], building_dict['time_zone'], timezone.utc))
-    t_max = times.convert_datetime_to_string(times.local_to_utc(time_param[1], time_zone, timezone.utc))
-
-    df_diff = pull_consumption_data(_db, building_param, t_min, t_max)
-    df_diff = times.groupby_date_vars(df_diff,
-                                      cnf.consumpt_agg_param_dict[agg_param],
-                                      to_zone=time_zone).agg(cnf.consumpt_agg_param_dict[agg_param]['agg_func'])
-
-    df_diff = df_diff.join(add_temp(_db, t_min, t_max, time_zone, agg_param))
-    return df_diff
-
-
-@st.cache_data(show_spinner=False)
-def add_temp(_db, t_min, t_max, time_zone, agg_param):
-    doc_outdoor_temp = (_db.collection(u'weather_Seville')
-           .where('datetime', '>=', t_min).where('datetime', '<', t_max).
-           order_by('datetime', direction=firestore.Query.ASCENDING)).stream()
-    df_temp = pd.DataFrame([s.to_dict() for s in doc_outdoor_temp]).set_index('datetime')[['temperature']]
-    #df_temp.index = pd.to_datetime(df_temp.index).round('15min')
-    df_temp.index = pd.to_datetime(df_temp.index)
-    df_temp = df_temp.groupby(pd.Grouper(freq='D')).max()
-    df_temp[cnf.building_target] = 6 * 10782 * 12 / 365  # 6kwh/m2 is our monthly target for Seville - the other const are for calibrating to daily total consumption
-    df_temp = times.groupby_date_vars(df_temp, cnf.consumpt_agg_param_dict[agg_param])\
-        .agg({'temperature': 'mean', cnf.building_target: cnf.consumpt_agg_param_dict[agg_param]['agg_func']})
-    df_temp = df_temp.rename(columns={'temperature': 'outdoor temperature'})
-
-    return df_temp
+def get_data_param_list(building_param, time_param):
+    query = f'''
+        SELECT
+             distinct data_param
+        FROM consumption.consumption
+        WHERE
+                Date(timestamp) BETWEEN "{time_param[0].strftime("%Y-%m-%d")}" 
+                AND "{time_param[1].strftime("%Y-%m-%d")}"
+            AND building = "{building_param}"
+    '''
+    import bigquery as bq
+    bq_client = bq.get_bq_client_from_toml_key(cnf.bq_project)
+    data_param_list = bq.send_bq_query(bq_client, query)['data_param'].tolist()
+    data_param_list = ['Building energy consumption'] + [param for param in data_param_list if
+                                                         param != 'Building energy consumption']
+    return data_param_list
 
 
 @st.cache_data(show_spinner=False)
@@ -145,26 +72,25 @@ def convert_metric(df, metric_param):
     return df
 
 
-def chart_df(df, data_param, agg_param, metric_param):
+def chart_df(df, agg_param, metric_param):
+    df.columns.name = None
     color = alt.Color('variable',
                       legend=alt.Legend(labelFontSize=14,  titleAnchor='middle',
                                         orient="right", direction="vertical", title=''))
 
 
-    chart = (alt.Chart(df[data_param].reset_index().melt(agg_param),
+    chart = (alt.Chart(df.drop(['outdoor temperature', 'Building target'], axis=1).reset_index().melt(agg_param),
                        title=f'Comparison of {metric_param} with outdoor temperature').mark_line().encode(
         x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=color))
 
-    if 'Building energy consumption' in data_param:
-        # Target line chart
-        target_line = (alt.Chart(df[cnf.building_target].reset_index().melt(agg_param))
-                             .mark_line(strokeDash=[10, 10])
-                             .encode(x=alt.X(agg_param, title='Date'),
-                                     y=alt.Y('value'),
-                                     color=color))
-        chart += target_line
+    target_line = (alt.Chart(df['Building target'].reset_index().melt(agg_param))
+                         .mark_line(strokeDash=[10, 10])
+                         .encode(x=alt.X(agg_param, title='Date'),
+                                 y=alt.Y('value'),
+                                 color=color))
+    chart += target_line
 
     temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(strokeDash=[1, 1]).encode(
         x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),

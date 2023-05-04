@@ -21,7 +21,7 @@ def set_params_exp(col1, col2):
     metric_param = col1.radio('Select chart metric',  cnf.metrics, key='exp_chart_metric')
     agg_param = col1.radio('Select chart frequency',  cnf.time_agg_dict.keys(), key='exp_chart_freq')
     raw_data = col2.checkbox("Show raw data", value=False, key="exp_raw_data")
-    return exp_param, metric_param, agg_param, raw_data
+    return exp_param, metric_param, agg_param
 
 
 def avg_all_rooms(df_dict_room):

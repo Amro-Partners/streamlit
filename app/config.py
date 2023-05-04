@@ -142,31 +142,26 @@ hmps_agg_param_dict = {
 # TODO: we need to localise the start_date and end_date
 consumpt_agg_param_dict = {
     "Date": {
+        'aggregation_bq': 'DATE',
+        'building_target': 6 * 10782 * 12 / 365,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Date',
         'aggregation_strftime': '%Y-%m-%d',
         'agg_func': 'sum'
     },
     "Week": {
+        'aggregation_bq': 'WEEK',
+        'building_target': 6 * 10782 * 12 / 52,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Week',
         'aggregation_strftime': '%Y week %W',
         'agg_func': 'sum'
     },
     "Month": {
+        'aggregation_bq': 'MONTH',
+        'building_target': 6 * 10782,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Month',
         'aggregation_strftime': '%Y-%m\n%B',
         'agg_func': 'sum'
-    },
-    "Day of week": {
-        'aggregation_field_name': 'Day of week',
-        'aggregation_strftime': '%A',
-        'agg_func': 'mean'
-    },
-    # TODO: bring Hour of Day back once we re-enable 15 minutes data reads for consumption
-    # "Hour of Day": {
-    #     'aggregation_field_name': "Hour of Day",
-    #     'aggregation_strftime': '%H',
-    #     'agg_func': mean()
-    # },
+    }
 }
 
 
@@ -274,7 +269,6 @@ ref_usage_name = 'Percentage of Refrig. usage (%)'
 elect_consump_name = 'Average room electricity consumption (kWh)'  # number of rooms across the group
 elect_cost_name = 'Average room electricity cost (€) (ex. VAT)'  # number of rooms across the group
 elect_carbon_name = 'Average room carbon footprint (kg CO2)'  # number of rooms across the group
-building_target = 'Building target'  # target consumption for the building
 
 int_format = lambda x: f"{round(x)}" if x == x else x
 perc_format = lambda x: f"{x:.1%}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.1%}, {x[1]:.1%}]"
