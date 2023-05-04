@@ -7,7 +7,7 @@ import times
 
 
 def set_params_consumpt(col1, col2):
-    building_param = col1.radio('Select building', ['Amro Seville'], key='consump_building')
+    building_param = col1.radio('Select building',cnf.sites_dict.keys(), key='consump_building')
     metric_param = col1.radio('Select metric',
                               ['Elect. consumption (kWh)', 'Floor area elect. consumption (kWh/m2)',
                                'Per bed elect. consumption (kWh)', 'GHG emission (kgCO2e)',
@@ -56,19 +56,19 @@ def get_data_param_list(building_param, time_param):
 
 
 @st.cache_data(show_spinner=False)
-def convert_metric(df, metric_param):
+def convert_metric(df, metric_param, site_dict):
     if 'kgCO2e' in metric_param:
         for col in df.columns:
             if 'temperature' not in col:
-                df[col] = df[col] * 0.259
+                df[col] = df[col] * site_dict['location_based_co2']  # 0.259
     if '/m2' in metric_param:
         for col in df.columns:
             if 'temperature' not in col:
-                df[col] = df[col] / 10782
+                df[col] = df[col] / site_dict['area_m2']  # 10782
     if 'Per bed' in metric_param:
         for col in df.columns:
             if 'temperature' not in col:
-                df[col] = df[col] / 339
+                df[col] = df[col] / site_dict['beds']  # 339
     return df
 
 
@@ -92,8 +92,11 @@ def chart_df(df, agg_param, metric_param):
                                  color=color))
     chart += target_line
 
-    temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(strokeDash=[1, 1]).encode(
+    temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(
+        strokeDash=[1, 1]).encode(
         x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
-        y=alt.Y('value', axis=alt.Axis(title='Outdoor temperature (°C)', tickColor='white', domain=False, titleAngle=-90), scale=alt.Scale(zero=False)),
+        y=alt.Y('value',
+                axis=alt.Axis(title='Outdoor temperature (°C)', tickColor='white', domain=False, titleAngle=-90),
+                scale=alt.Scale(zero=False)),
         color=color))
     return alt.layer(chart, temp_line).resolve_scale(y='independent')

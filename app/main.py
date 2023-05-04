@@ -105,8 +105,8 @@ def main():
     '''
     cons_df = bq.send_bq_query(bq_client, query)
     cons_df = cons_df.pivot(index=agg_param_dict['aggregation_field_name'], columns='data_param', values='aggregate_value')
-    cons_df['Building target'] = agg_param_dict['building_target']
-    cons_df_metric = cons.convert_metric(cons_df, tab_consumpt_metric_param)
+    cons_df['Building target'] = agg_param_dict['building_consump_intensity_target'] * site_dict['area_m2']
+    cons_df_metric = cons.convert_metric(cons_df, tab_consumpt_metric_param, site_dict)
     if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
         col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
     else:

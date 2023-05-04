@@ -26,7 +26,10 @@ sites_dict = {
         'AHU_chart_cols': [('Outside temperature (°C)', 'Ventilation temperature set point (°C)'),
                            ('Ventilation rate supply', 'Ventilation rate return'),
                            'Supply Running'],
-        'floors_col': 'Title'
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 10782,
+        'beds': 339
     },
     "Amro Valencia": {
         'time_zone': 'Europe/Madrid',
@@ -37,15 +40,21 @@ sites_dict = {
         'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
                              (), 'Percentage of A/C usage (%)'],
         #'AHU_chart_cols': [] #[('Outside temperature (°C)'), ('Ventilation rate supply', 'Ventilation rate return'), ()],
-        'floors_col': 'Title'
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 4007.58,
+        'beds': 162
     },
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
         'vent_file': 'vent_codes_seville.csv',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
-        'AHU_units': [], # ['CL01', 'CL02', 'CL03'],
-        'floors_col': 'Title'
+        'AHU_units': [],  # ['CL01', 'CL02', 'CL03'],
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 7000,
+        'beds': 231
     },
 }
 
@@ -143,21 +152,21 @@ hmps_agg_param_dict = {
 consumpt_agg_param_dict = {
     "Date": {
         'aggregation_bq': 'DATE',
-        'building_target': 6 * 10782 * 12 / 365,  # 6kwh/m2 is our monthly target for
+        'building_consump_intensity_target': 6 * 12 / 365,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Date',
         'aggregation_strftime': '%Y-%m-%d',
         'agg_func': 'sum'
     },
     "Week": {
         'aggregation_bq': 'WEEK',
-        'building_target': 6 * 10782 * 12 / 52,  # 6kwh/m2 is our monthly target for
+        'building_consump_intensity_target': 6 * 12 / 52,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Week',
         'aggregation_strftime': '%Y week %W',
         'agg_func': 'sum'
     },
     "Month": {
         'aggregation_bq': 'MONTH',
-        'building_target': 6 * 10782,  # 6kwh/m2 is our monthly target for
+        'building_consump_intensity_target': 6,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Month',
         'aggregation_strftime': '%Y-%m\n%B',
         'agg_func': 'sum'
