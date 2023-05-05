@@ -172,7 +172,6 @@ def main():
         AND ahu = "{tab_ahu_charts_ahu_param}"
     '''
     ahu_chart_df = bq.read_bq(bq_client, cnf.table_charts_ahus, where_cond)
-
     cha.run_flow_charts(ahu_chart_df,
                         st.session_state.chart_ahu_raw_data,
                         site_dict['AHU_chart_cols'], col2_AHU_charts)
