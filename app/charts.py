@@ -12,7 +12,7 @@ def set_params_room_charts(col1, col2):
     floor_to_rooms_dict = rooms.get_group_to_rooms_dict(building_dict['rooms_file'], building_dict['floors_col'])
     room_param = col1.selectbox('Select room', sorted(floor_to_rooms_dict[floor_param]), key='chart_room')
     raw_data = col2.checkbox("Show raw data", value=False, key="chart_rooms_raw_data")
-    return building_param, floor_param, room_param, raw_data
+    return building_param, floor_param, room_param
 
 
 def set_params_ahu_charts(col1, col2):
@@ -25,7 +25,7 @@ def set_params_ahu_charts(col1, col2):
     ahu_dict = rooms.get_ahu_dict(building_dict['vent_file'])
     ahu_param = col1.radio('Select AHU unit', ahu_dict.keys(), key='ahu_room')
     raw_data = col2.checkbox("Show raw data", value=False, key="chart_ahu_raw_data")
-    return building_param, ahu_dict[ahu_param], raw_data
+    return building_param, ahu_dict[ahu_param]
 
 
 def run_flow_charts(df, session_state_raw_data, chart_cols, _col):

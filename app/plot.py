@@ -10,6 +10,11 @@ plt.rcParams.update({'figure.max_open_warning': 0})
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
+
+def _flot_to_bool(onoff_col):
+    return onoff_col == 1
+
+
 @st.cache_data(show_spinner=False)
 def float2bool(col):
     return col == 1
@@ -17,7 +22,7 @@ def float2bool(col):
 
 @st.cache_data(show_spinner=False)
 def create_start_end_times(onoff_col, timestamp_col):
-    onoff_col = onoff_col.fillna(value=1.0)
+    onoff_col = _flot_to_bool(onoff_col).fillna(value=0.0)
     start_on_times = []
     end_on_times = []
     if onoff_col.iloc[0] in (0, 1) and onoff_col.iloc[0]:

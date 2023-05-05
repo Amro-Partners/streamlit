@@ -19,7 +19,7 @@ def set_params_heatmaps(col1, col2):
                              key='hmaps_time')
     agg_param = col1.radio('Select average by', cnf.hmps_agg_param_dict.keys(), key='hmaps_agg')
     raw_data = col2.checkbox("Show raw data", value=False, key="hmaps_raw_data")
-    return building_param, data_param, time_param, agg_param, raw_data
+    return building_param, data_param, time_param, agg_param
 
 
 @st.cache_data(show_spinner=False)

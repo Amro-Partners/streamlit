@@ -10,12 +10,13 @@ bq_cert_file = "amro-partners-f2967e9bb3a0.json"
 storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
 
-
 # BQ tables
-table_heatmaps = 'test_heatmaps.heatmaps'
-table_charts_rooms = 'test_charts.rooms'
-table_charts_ahus = 'test_charts.ahus'
-table_exp_rooms = 'test_experiments.rooms'
+table_consumption = 'consumption.consumption'
+table_heatmaps = 'heatmaps.heatmaps'
+table_charts_rooms = 'charts.rooms'
+table_charts_ahus = 'charts.ahus'
+table_exp_rooms = 'experiments.rooms'
+
 
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
@@ -34,7 +35,10 @@ sites_dict = {
         'AHU_chart_cols': [('Outside temperature (°C)', 'Ventilation temperature set point (°C)'),
                            ('Ventilation rate supply', 'Ventilation rate return'),
                            'Supply Running'],
-        'floors_col': 'Title'
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 10782,
+        'beds': 339
     },
     "Amro Valencia": {
         'time_zone': 'Europe/Madrid',
@@ -45,15 +49,21 @@ sites_dict = {
         'rooms_chart_cols': [('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
                              (), 'Percentage of A/C usage (%)'],
         #'AHU_chart_cols': [] #[('Outside temperature (°C)'), ('Ventilation rate supply', 'Ventilation rate return'), ()],
-        'floors_col': 'Title'
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 4007.58,
+        'beds': 162
     },
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
         'vent_file': 'vent_codes_seville.csv',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
-        'AHU_units': [], # ['CL01', 'CL02', 'CL03'],
-        'floors_col': 'Title'
+        'AHU_units': [],  # ['CL01', 'CL02', 'CL03'],
+        'floors_col': 'Title',
+        'location_based_co2': 0.259,
+        'area_m2': 7000,
+        'beds': 231
     },
 }
 
@@ -150,31 +160,26 @@ hmps_agg_param_dict = {
 # TODO: we need to localise the start_date and end_date
 consumpt_agg_param_dict = {
     "Date": {
+        'aggregation_bq': 'DATE',
+        'building_consump_intensity_target': 6 * 12 / 365,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Date',
         'aggregation_strftime': '%Y-%m-%d',
         'agg_func': 'sum'
     },
     "Week": {
+        'aggregation_bq': 'WEEK',
+        'building_consump_intensity_target': 6 * 12 / 52,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Week',
         'aggregation_strftime': '%Y week %W',
         'agg_func': 'sum'
     },
     "Month": {
+        'aggregation_bq': 'MONTH',
+        'building_consump_intensity_target': 6,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Month',
         'aggregation_strftime': '%Y-%m\n%B',
         'agg_func': 'sum'
-    },
-    "Day of week": {
-        'aggregation_field_name': 'Day of week',
-        'aggregation_strftime': '%A',
-        'agg_func': 'mean'
-    },
-    # TODO: bring Hour of Day back once we re-enable 15 minutes data reads for consumption
-    # "Hour of Day": {
-    #     'aggregation_field_name': "Hour of Day",
-    #     'aggregation_strftime': '%H',
-    #     'agg_func': mean()
-    # },
+    }
 }
 
 
@@ -282,7 +287,6 @@ ref_usage_name = 'Percentage of Refrig. usage (%)'
 elect_consump_name = 'Average room electricity consumption (kWh)'  # number of rooms across the group
 elect_cost_name = 'Average room electricity cost (€) (ex. VAT)'  # number of rooms across the group
 elect_carbon_name = 'Average room carbon footprint (kg CO2)'  # number of rooms across the group
-building_target = 'Building target'  # target consumption for the building
 
 int_format = lambda x: f"{round(x)}" if x == x else x
 perc_format = lambda x: f"{x:.1%}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.1%}, {x[1]:.1%}]"

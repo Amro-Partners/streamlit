@@ -3,7 +3,7 @@ import times
 import streamlit as st
 from datetime import timedelta
 import config as cnf
-import firebase as fb
+import bigquery as bq
 import heatmaps as hmap
 import charts as cha
 import experiments as exp
@@ -48,21 +48,18 @@ def set_homepage():
     col1_exper, _, col2_exper, _ = tab_exper.columns(cnf.tabs_space)
 
     (tab_hmaps_building_param, tab_hmaps_data_param,
-     tab_hmaps_time_param, tab_hmaps_agg_param,
-     tab_hmaps_raw_data) = hmap.set_params_heatmaps(col1_rooms_hmaps, col2_rooms_hmaps)
+     tab_hmaps_time_param, tab_hmaps_agg_param) = hmap.set_params_heatmaps(col1_rooms_hmaps, col2_rooms_hmaps)
 
     (tab_rooms_charts_building_param, tab_rooms_charts_floor_param,
-     tab_rooms_charts_room_param, tab_rooms_charts_raw_data) = cha.set_params_room_charts(col1_rooms_charts, col2_rooms_charts)
+     tab_rooms_charts_room_param) = cha.set_params_room_charts(col1_rooms_charts, col2_rooms_charts)
 
-    (tab_ahu_charts_building_param, tab_ahu_charts_ahu_param,
-     tab_ahu_charts_raw_data) = cha.set_params_ahu_charts(col1_AHU_charts, col2_AHU_charts)
+    (tab_ahu_charts_building_param, tab_ahu_charts_ahu_param) = cha.set_params_ahu_charts(col1_AHU_charts, col2_AHU_charts)
 
     (tab_consumpt_building_param, tab_consumpt_time_param,
-     tab_consumpt_agg_param, tab_consumpt_metric_param,
-     tab_consumpt_data_param, tab_consumpt_raw_data) = cons.set_params_consumpt(col1_consumpt, col2_consumpt)
+     tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param) = cons.set_params_consumpt(col1_consumpt, col2_consumpt)
 
     (tab_exper_exp_param, tab_exper_metric_param, 
-     tab_exper_agg_param, tab_exper_raw_data) = exp.set_params_exp(col1_exper, col2_exper)
+     tab_exper_agg_param) = exp.set_params_exp(col1_exper, col2_exper)
 
     return (col2_rooms_hmaps, tab_hmaps_building_param, tab_hmaps_data_param, tab_hmaps_time_param, tab_hmaps_agg_param,
             col2_rooms_charts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param, tab_rooms_charts_room_param,
@@ -71,21 +68,11 @@ def set_homepage():
             col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param)
 
 
-@st.cache_resource(show_spinner=False)
-def read_files_in_loop(file_prefix, start_date, end_date, _storage_bucket):
-    list_of_data = []
-    for date in times.daterange(start_date, end_date):
-        times.log(f'loading file {file_prefix}{date.strftime("%Y/%m/%d")}')
-        list_of_data.append(fb.read_and_unpickle(f'{file_prefix}{date.strftime("%Y/%m/%d")}', _storage_bucket))
-    return list_of_data
-
-
 def main():
     date_yesterday = (times.utc_now() - timedelta(days=1))
     date_last_week = (times.utc_now() - timedelta(days=7))
 
-    firestore_client, storage_bucket = fb.get_db_from_firebase_key(cnf.storage_bucket)
-    bq_client = fb.get_bq_client_from_toml_key(cnf.bq_project)
+    bq_client = bq.get_bq_client_from_toml_key(cnf.bq_project)
 
     (col2_rooms_hmaps, tab_hmaps_building_param, tab_hmaps_data_param, tab_hmaps_time_param, tab_hmaps_agg_param,
      col2_rooms_charts, tab_rooms_charts_building_param, tab_rooms_charts_floor_param, tab_rooms_charts_room_param,
@@ -93,14 +80,37 @@ def main():
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
      col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param) = set_homepage()  # Get choice of building
 
-    # # consumption
-    cons_df = cons.consumption_summary(firestore_client, tab_consumpt_building_param,
-                                       tab_consumpt_time_param, tab_consumpt_agg_param)
-    cons_df_metric = cons.convert_metric(cons_df.copy(), tab_consumpt_metric_param)
+    # consumption
+    times.log(f'loading consumption data between {tab_consumpt_time_param[0].strftime("%Y-%m-%d")} AND {tab_consumpt_time_param[1].strftime("%Y-%m-%d")}')
+    agg_param_dict = cnf.consumpt_agg_param_dict[tab_consumpt_agg_param]
+    site_dict = cnf.sites_dict[tab_consumpt_building_param]
+
+    query = f'''
+        SELECT
+            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
+            data_param,
+             CASE
+                WHEN data_param like "%temperature%" THEN AVG(value)
+                ELSE SUM(value)
+            END AS aggregate_value
+        FROM {cnf.table_consumption}
+        WHERE
+            Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_consumpt_time_param[0].strftime("%Y-%m-%d")}"
+                AND "{tab_consumpt_time_param[1].strftime("%Y-%m-%d")}"
+            AND building = "{tab_consumpt_building_param}"
+            AND data_param IN {'('+ ','.join([f'"{t}"' for t in tab_consumpt_data_param])+')'}
+        GROUP BY
+            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}"),
+            data_param
+    '''
+    cons_df = bq.send_bq_query(bq_client, query)
+    cons_df = cons_df.pivot(index=agg_param_dict['aggregation_field_name'], columns='data_param', values='aggregate_value')
+    cons_df['Building target'] = agg_param_dict['building_consump_intensity_target'] * site_dict['area_m2']
+    cons_df_metric = cons.convert_metric(cons_df, tab_consumpt_metric_param, site_dict)
     if 'consump_raw_data' in st.session_state and st.session_state.consump_raw_data:
         col2_consumpt.dataframe(cons_df_metric, use_container_width=True)
     else:
-        chart = cons.chart_df(cons_df_metric, tab_consumpt_data_param, tab_consumpt_agg_param, tab_consumpt_metric_param)
+        chart = cons.chart_df(cons_df_metric, tab_consumpt_agg_param, tab_consumpt_metric_param)
         col2_consumpt.altair_chart(chart.interactive(), use_container_width=True)
 
 
@@ -118,7 +128,8 @@ def main():
             AVG(parameter_value) AS parameter_value
         FROM {cnf.table_heatmaps}
         WHERE
-            Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}" AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
+            Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}"
+                AND "{tab_hmaps_time_param[1].strftime("%Y-%m-%d")}"
             AND building = "{tab_hmaps_building_param}"
             AND data_param = "{param_dict['bq_field']}"
         GROUP BY
@@ -126,7 +137,7 @@ def main():
             floor,
             room
     '''
-    hmp_df = fb.send_bq_query(bq_client, query)
+    hmp_df = bq.send_bq_query(bq_client, query)
     for floor in site_dict['floors_order']:
         hmp_df_floor = hmap.pivot_df(hmp_df, floor, agg_param_dict['aggregation_field_name'])
         hmap.plot_heatmap(df=hmp_df_floor,
@@ -146,7 +157,7 @@ def main():
         AND building = "{tab_rooms_charts_building_param}"
         AND room = "{tab_rooms_charts_room_param}"
     '''
-    rooms_chart_df = fb.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
+    rooms_chart_df = bq.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
     cha.run_flow_charts(rooms_chart_df,
                         st.session_state.chart_rooms_raw_data,
                         site_dict['rooms_chart_cols'], col2_rooms_charts)
@@ -160,13 +171,12 @@ def main():
         AND building = "{tab_ahu_charts_building_param}"
         AND ahu = "{tab_ahu_charts_ahu_param}"
     '''
-    ahu_chart_df = fb.read_bq(bq_client, cnf.table_charts_ahus, where_cond)
-
+    ahu_chart_df = bq.read_bq(bq_client, cnf.table_charts_ahus, where_cond)
     cha.run_flow_charts(ahu_chart_df,
                         st.session_state.chart_ahu_raw_data,
                         site_dict['AHU_chart_cols'], col2_AHU_charts)
 
-    # expers
+    # experiments
     # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
     # TODO: ince we move to BQ enable start_date longer than X days
     start_date = (cnf.exp_dict[tab_exper_exp_param]['start_exp_date_utc']
@@ -203,7 +213,7 @@ def main():
         )
         ORDER BY timestamp ASC
     """
-    exp_df = fb.send_bq_query(bq_client, query)
+    exp_df = bq.send_bq_query(bq_client, query)
     summary_dict = exp.get_exp_summary_dict(exp_df, tab_exper_exp_param)
 
     test_dict = summary_dict[cnf.test_group]
@@ -230,5 +240,3 @@ def main():
 
 
 main()
-
-
