@@ -10,6 +10,14 @@ bq_cert_file = "amro-partners-f2967e9bb3a0.json"
 storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
 
+# BQ tables
+table_consumption = 'consumption.consumption'
+table_heatmaps = 'heatmaps.heatmaps'
+table_charts_rooms = 'charts.rooms'
+table_charts_ahus = 'charts.ahus'
+table_exp_rooms = 'experiments.rooms'
+
+
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
 tabs_space = [2.5, 0.5, 6, 1]
 
