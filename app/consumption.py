@@ -74,6 +74,7 @@ def convert_metric(df, metric_param, site_dict):
 
 def chart_df(df, agg_param, metric_param):
     df.columns.name = None
+    df.index = times.change_index_timezone(df)
     color = alt.Color('variable',
                       legend=alt.Legend(labelFontSize=14,  titleAnchor='middle',
                                         orient="right", direction="vertical", title=''))
