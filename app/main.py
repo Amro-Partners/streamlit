@@ -85,9 +85,16 @@ def main():
     agg_param_dict = cnf.consumpt_agg_param_dict[tab_consumpt_agg_param]
     site_dict = cnf.sites_dict[tab_consumpt_building_param]
 
+    if agg_param_dict['aggregation_bq'] == "DATE":
+        agg_func = f'''EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE '{site_dict["time_zone"]}')'''
+    elif agg_param_dict['aggregation_bq'] == "WEEK":
+        agg_func = f'''DATE(DATE_TRUNC(timestamp, WEEK(MONDAY)))'''
+    elif agg_param_dict['aggregation_bq'] == "MONTH":
+        agg_func = f'''FORMAT_TIMESTAMP('%Y-%m', timestamp)'''
+
     query = f'''
         SELECT
-            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
+            {agg_func} AS `{agg_param_dict['aggregation_field_name']}`,
             data_param,
              CASE
                 WHEN data_param like "%temperature%" THEN AVG(value)
@@ -100,7 +107,7 @@ def main():
             AND building = "{tab_consumpt_building_param}"
             AND data_param IN {'('+ ','.join([f'"{t}"' for t in tab_consumpt_data_param])+')'}
         GROUP BY
-            EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}"),
+            {agg_func},
             data_param
     '''
     cons_df = bq.send_bq_query(bq_client, query)
@@ -119,13 +126,14 @@ def main():
     site_dict = cnf.sites_dict[tab_hmaps_building_param]
     param_dict = cnf.data_param_dict[tab_hmaps_data_param]
     agg_param_dict = cnf.hmps_agg_param_dict[tab_hmaps_agg_param]
+    agg_func = 'MAX(parameter_value) - MIN(parameter_value)' if param_dict.get('cumulative') else 'AVG(parameter_value)'
 
     query = f'''
         SELECT
             EXTRACT({agg_param_dict['aggregation_bq']} FROM timestamp AT TIME ZONE "{site_dict['time_zone']}") AS `{agg_param_dict['aggregation_field_name']}`,
             floor,
             room,
-            AVG(parameter_value) AS parameter_value
+            {agg_func} AS parameter_value
         FROM {cnf.table_heatmaps}
         WHERE
             Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{tab_hmaps_time_param[0].strftime("%Y-%m-%d")}"

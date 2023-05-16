@@ -138,6 +138,12 @@ data_param_dict = {
         'bq_field': 'ventilation_rate_supply',
         'colour': 'burlywood'
     },
+    'Room consumption (kWh)': {
+        'show_per_room': True,
+        'bq_field': 'room_consumption',
+        'fmt': '.1f',
+        'cumulative': True
+    }
 }
 
 

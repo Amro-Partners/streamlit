@@ -74,7 +74,8 @@ def convert_metric(df, metric_param, site_dict):
 
 def chart_df(df, agg_param, metric_param):
     df.columns.name = None
-    df.index = times.change_index_timezone(df)
+    if df.index.dtype.name == 'dbdate':
+        df.index = times.change_index_timezone(df)
     color = alt.Color('variable',
                       legend=alt.Legend(labelFontSize=14,  titleAnchor='middle',
                                         orient="right", direction="vertical", title=''))
@@ -82,20 +83,20 @@ def chart_df(df, agg_param, metric_param):
 
     chart = (alt.Chart(df.drop(['outdoor temperature', 'Building target'], axis=1).reset_index().melt(agg_param),
                        title=f'Comparison of {metric_param} with outdoor temperature').mark_line().encode(
-        x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
+        x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=color))
 
     target_line = (alt.Chart(df['Building target'].reset_index().melt(agg_param))
                          .mark_line(strokeDash=[10, 10])
-                         .encode(x=alt.X(agg_param, title='Date'),
+                         .encode(x=alt.X(agg_param, title=agg_param),
                                  y=alt.Y('value'),
                                  color=color))
     chart += target_line
 
     temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(
         strokeDash=[1, 1]).encode(
-        x=alt.X(agg_param, axis=alt.Axis(title='Date', tickColor='white', grid=False, domain=False, labelAngle=0)),
+        x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value',
                 axis=alt.Axis(title='Outdoor temperature (°C)', tickColor='white', domain=False, titleAngle=-90),
                 scale=alt.Scale(zero=False)),
