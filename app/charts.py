@@ -17,7 +17,7 @@ def set_params_room_charts(col1, col2):
 
 def set_params_ahu_charts(col1, col2):
     # TODO: reenable Malaga in building_param
-    ahu_sites = {k for k, v in cnf.sites_dict.items() if v.get('AHU_units') and v.get('AHU_chart_cols')}
+    ahu_sites = {k for k, v in cnf.sites_dict.items() if v.get('AHU_chart_cols')}
     if not ahu_sites:
         return None, None, None
     building_param = col1.radio('Select building', ahu_sites, key='ahu_building')

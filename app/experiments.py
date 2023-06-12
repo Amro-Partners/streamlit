@@ -9,6 +9,7 @@ import experiments_utils as utl
 import streamlit as st
 import altair as alt
 import pytz
+import scipy.stats
 
 
 def set_params_exp(col1, col2):
@@ -68,7 +69,9 @@ def get_exp_summary_dict(_exp_df, exp_param):
 
         df_sum = get_exp_metrics(df_sum, flight_duration, exp_dict)
 
-        t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC)
+        # converting exp_dict['start_exp_date_utc'] to local time zone and then making it 'timezone unaware'
+        # in order to compare with the also localised but 'timezone unaware' df_sum.index
+        t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC).astimezone(pytz.timezone(exp_dict['time_zone'])).replace(tzinfo=None)
         df_sum_pre = df_sum.loc[df_sum.index < t]
         df_sum_post = df_sum.loc[df_sum.index >= t]
 
@@ -90,13 +93,18 @@ def _se_group_series(group_dict1, group_dict2):
 
 
 @st.cache_data(show_spinner=False)
-def get_exp_summary_df(test_dict, control_dict):
+def get_exp_summary_df(test_dict, control_dict, sequential_A_B):
     # avg_pre_df_name is only use for caching
     avg_test, avg_cont, diff = _groups_stat(test_dict, control_dict)
     df_sum = pd.concat([avg_test, avg_cont], axis=1)
     df_sum.columns = [cnf.test_group, cnf.control_group]
     df_sum['Difference'] = diff
-    df_sum['95%  C.I.'] = calculate_CI(test_dict, control_dict)
+    if sequential_A_B:
+        std_diff = np.sqrt((test_dict.std()**2/len(test_dict)) + (control_dict.std()**2/len(control_dict)))
+        ci_low, ci_high = scipy.stats.norm.interval(0.95, loc=diff, scale=std_diff)
+        df_sum['95%  C.I.'] = pd.Series([(i, j) for i, j in zip(ci_low, ci_high)], index=df_sum.index)
+    else:
+        df_sum['95%  C.I.'] = calculate_CI_pairwise(test_dict, control_dict)
     return df_sum
 
 
@@ -107,7 +115,7 @@ def _groups_stat(test_dict, cont_dict):
     return avg_test, avg_cont, diff
 
 
-def calculate_CI(df1, df2, lags=1000, alpha=0.05):
+def calculate_CI_pairwise(df1, df2, lags=1000, alpha=0.05):
     # Newey–West-based estimator for C.I.
     CI_dict = {}
     for col in df1.columns:
@@ -175,7 +183,8 @@ def show_summary_tables(_test_dict, _control_dict, _col, exp_param):
 
     # The rest of the metrics post-starting the experiment
     summary_df_post = get_exp_summary_df(_test_dict[cnf.avg_post_df_name],
-                                         _control_dict[cnf.avg_post_df_name])
+                                         _control_dict[cnf.avg_post_df_name],
+                                         exp_dict['sequential_A_B'])
     summary_df_post = pd.concat([first_row, summary_df_post])
 
     exp_kwh_monthly = round(-summary_df_post.loc['Average room electricity consumption (kWh)']['Difference']
@@ -203,7 +212,8 @@ def get_selected_metric_df(_test_dict, _control_dict, exp_param, metric_param, a
     df = _test_dict[cnf.avg_group_df_name][[metric_param]].join(
         _control_dict[cnf.avg_group_df_name][[metric_param]],
         lsuffix='_'+cnf.test_group,
-        rsuffix='_'+cnf.control_group)
+        rsuffix='_'+cnf.control_group,
+        how='outer')
     df = df.groupby(pd.Grouper(freq=cnf.time_agg_dict[agg_param], origin='epoch')).mean()
     df.index.name = "Time"
     return df
