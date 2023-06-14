@@ -60,8 +60,8 @@ sites_dict = {
         'rooms_chart_cols': [
             ('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),
             (), 'Percentage of A/C usage (%)'],
-        # 'AHU_chart_cols': [('Outside temperature (°C)',),
-        #                    ('Ventilation rate supply',), ''],
+        'AHU_chart_cols': [('Outside temperature (°C)',),
+                           ('Ventilation rate supply',), ''],
         'floors_col': 'Title',
         'location_based_co2': 0.259,
         'area_m2': 7000,
@@ -194,25 +194,25 @@ consumpt_agg_param_dict = {
 ######### Experiments  ###########
 ######################################
 exp_dict = {
-    # "Amro Malaga adaptive ventilation speed": {
-    #     'time_zone': 'Europe/Madrid',
-    #     'groups_order': ['Control',
-    #                      'Test'],
-    #     'group_col': 'Group',
-    #     'start_exp_date_utc': datetime(2023, 5, 24, 16, 0),
-    #     'end_exp_date_utc': datetime.now(),
-    #     'calibration_days': 0,
-    #     'market_based_electricity_cost': 0.370,
-    #     'location_based_co2': 0.259,
-    #     'sequential_A_B': True
-    # },
+    "Amro Malaga adaptive ventilation speed": {
+        'time_zone': 'Europe/Madrid',
+        'groups_order': ['Control',
+                         'Test'],
+        'group_col': 'Group',
+        'start_exp_date_utc': datetime(2023, 5, 24, 16, 0),
+        'end_exp_date_utc': times.utc_now(),
+        'calibration_days': 0,
+        'market_based_electricity_cost': 0.370,
+        'location_based_co2': 0.259,
+        'sequential_A_B': True
+    },
     "Amro Seville adaptive ventilation speed": {
         'time_zone': 'Europe/Madrid',
         'groups_order': ['Control',
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 5, 24, 16, 0),
-        'end_exp_date_utc': datetime.now(),
+        'end_exp_date_utc': times.utc_now(),
         'calibration_days': 0,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259,
@@ -224,7 +224,7 @@ exp_dict = {
                          'Test'],
         'group_col': 'Group',
         'start_exp_date_utc': datetime(2023, 5, 24, 16, 0),
-        'end_exp_date_utc': datetime.now(),
+        'end_exp_date_utc': times.utc_now(),
         'calibration_days': 0,
         'market_based_electricity_cost': 0.370,
         'location_based_co2': 0.259,
