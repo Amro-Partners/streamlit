@@ -19,6 +19,7 @@ def bq_client(creds, project):
     return bigquery.Client(credentials=creds, project=project)
 
 
+@st.cache_data(show_spinner=False, ttl=3600)
 def send_bq_query(_client, query):
     return _client.query(query).to_dataframe()
 
