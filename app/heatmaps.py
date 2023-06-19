@@ -22,7 +22,7 @@ def set_params_heatmaps(col1, col2):
     return building_param, data_param, time_param, agg_param
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_config_dicts(building_param, data_param, agg_param):
     building_dict = cnf.sites_dict[building_param]
     param_dict = cnf.data_param_dict[data_param]
@@ -30,7 +30,7 @@ def get_config_dicts(building_param, data_param, agg_param):
     return building_dict, param_dict, agg_param_dict
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def pivot_df(df, floor, index_col):
     return df[df.floor == floor].pivot(index=index_col, columns='room', values='parameter_value')
 

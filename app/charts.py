@@ -40,7 +40,7 @@ def run_flow_charts(df, session_state_raw_data, chart_cols, _col):
         _col.altair_chart(plot.charts(df, max_datetime, chart_cols).interactive(), use_container_width=True)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_ahu_dict_of_dfs(ahu_list_of_dicts, building_param):
     charts_dict_of_dfs = {}
     for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
@@ -50,7 +50,7 @@ def get_ahu_dict_of_dfs(ahu_list_of_dicts, building_param):
     return charts_dict_of_dfs
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_rooms_dict_of_dfs(rooms_list_of_dicts, building_param, floor_param):
     rooms_dict_of_dfs = {}
     # for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.sites_dict]:

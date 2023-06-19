@@ -13,7 +13,7 @@ def format_row_wise(df, formatter):
     return styler
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def info(duration, test_name, market_based_electricity_cost, location_based_co2):
     title = 'See how it is calculated'
     intro = [f'''

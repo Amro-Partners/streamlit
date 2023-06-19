@@ -15,12 +15,12 @@ def _flot_to_bool(onoff_col):
     return onoff_col == 1
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def float2bool(col):
     return col == 1
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def create_start_end_times(onoff_col, timestamp_col):
     onoff_col = _flot_to_bool(onoff_col).fillna(value=0.0)
     start_on_times = []

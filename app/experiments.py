@@ -51,7 +51,7 @@ def select_columns(df):
     return df.drop(columns=drop_cols).rename(columns=rename_cols)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_exp_summary_dict(_exp_df, exp_param):
     exp_dict = cnf.exp_dict[exp_param]
     summary_dict = {}
@@ -92,7 +92,7 @@ def _se_group_series(group_dict1, group_dict2):
     return (group_dict1 - group_dict2).sem()
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_exp_summary_df(test_dict, control_dict, sequential_A_B):
     # avg_pre_df_name is only use for caching
     avg_test, avg_cont, diff = _groups_stat(test_dict, control_dict)
@@ -151,7 +151,7 @@ def calculate_CI_pairwise(df1, df2, lags=1000, alpha=0.05):
     return pd.Series(CI_dict)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_exp_times(exp_param):
     exp_dict = cnf.exp_dict[exp_param]
     start_calibration_date_utc = (exp_dict['start_exp_date_utc'] - timedelta(days=exp_dict['calibration_days']))
@@ -206,7 +206,7 @@ def show_summary_tables(_test_dict, _control_dict, _col, exp_param):
     _col.expander(title, expanded=False).write(f'{intro[1]}\n{body}')
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_selected_metric_df(_test_dict, _control_dict, exp_param, metric_param, agg_param):
     # exp_param required only for caching
     df = _test_dict[cnf.avg_group_df_name][[metric_param]].join(

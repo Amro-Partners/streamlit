@@ -36,7 +36,7 @@ def set_params_consumpt(col1, col2):
     return building_param, time_param, agg_param, metric_param, data_param
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def get_data_param_list(building_param, time_param):
     query = f'''
         SELECT
@@ -55,7 +55,7 @@ def get_data_param_list(building_param, time_param):
     return data_param_list
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)
 def convert_metric(df, metric_param, site_dict):
     if 'kgCO2e' in metric_param:
         for col in df.columns:
