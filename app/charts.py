@@ -41,16 +41,6 @@ def run_flow_charts(df, session_state_raw_data, chart_cols, _col):
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
-def get_ahu_dict_of_dfs(ahu_list_of_dicts, building_param):
-    charts_dict_of_dfs = {}
-    for ahu_unit in ahu_list_of_dicts[0][building_param].keys():
-        charts_dict_of_dfs[ahu_unit] = (
-                pd.concat([dic[building_param][ahu_unit] for dic in ahu_list_of_dicts])
-                .drop_duplicates())
-    return charts_dict_of_dfs
-
-
-@st.cache_data(show_spinner=False, ttl=3600)
 def get_rooms_dict_of_dfs(rooms_list_of_dicts, building_param, floor_param):
     rooms_dict_of_dfs = {}
     # for building_param in [bp for bp in rooms_list_of_dicts[0].keys() if bp in cnf.sites_dict]:
