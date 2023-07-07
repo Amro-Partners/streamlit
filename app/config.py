@@ -230,18 +230,21 @@ exp_dict = {
     #     'location_based_co2': 0.259,
     #     'sequential_A_B': True
     # },
-    "Amro Seville ventilation temp": {
-        'time_zone': 'Europe/Madrid',
-        'groups_order': ['Control',
-                         'Test'],
-        'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 6, 27, 16, 00),
-        'end_exp_date_utc': datetime(2023, 12, 18, 23, 59),
-        'calibration_days': 0,
-        'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.259,
-        'sequential_A_B': True
-    },
+    # "Amro Seville ventilation temp": {
+    #     'time_zone': 'Europe/Madrid',
+    #     'groups_order': ['Control',
+    #                      'Test'],
+    #     'group_col': 'Group',
+    #     'start_exp_date_utc': datetime(2023, 6, 27, 16, 00),
+    #     'end_exp_date_utc': datetime(2023, 12, 18, 23, 59),
+    #     'calibration_days': 0,
+    #     'market_based_electricity_cost': 0.370,
+    #     'location_based_co2': 0.259,
+    #     'sequential_A_B': True
+    # },
+
+
+
     "Amro Valencia adaptive ventilation speed - greater speed change": {
         'time_zone': 'Europe/Madrid',
         'groups_order': ['Control',

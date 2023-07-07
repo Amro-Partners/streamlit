@@ -11,6 +11,9 @@ import altair as alt
 import pytz
 import scipy.stats
 
+# Set display options to show all columns
+pd.set_option('display.max_columns', None)
+
 
 def set_params_exp(col1, col2):
     sorted_experiments = dict(sorted({k: v for k, v in cnf.exp_dict.items()}.items(),
@@ -36,8 +39,8 @@ def avg_all_rooms(df_dict_room):
 def get_exp_metrics(df_sum, flight_duration, exp_dict):
     # TODO: improve this formula once we store consumption with transform repo
     # 3.42 - avg daily total VRV consumption per room (external units included)
-    df_sum[cnf.elect_consump_name] = ((3.42 / df_sum[cnf.ref_usage_name].mean() / (24 * 4)) * flight_duration.days
-                                      * df_sum[cnf.ref_usage_name])
+    df_sum[cnf.elect_consump_name] = ((3.42  / (24 * 4)) * flight_duration.days
+                                      * df_sum[cnf.ac_usage_name])
     df_sum[cnf.elect_cost_name] = exp_dict['market_based_electricity_cost'] * df_sum[cnf.elect_consump_name]
     df_sum[cnf.elect_carbon_name] = exp_dict['location_based_co2'] * df_sum[cnf.elect_consump_name]
     return df_sum
@@ -68,7 +71,8 @@ def get_exp_summary_dict(_exp_df, exp_param):
         #              in cnf.data_param_dict.items() if param_dict['show_per_room']}))
 
         df_sum = get_exp_metrics(df_sum, flight_duration, exp_dict)
-
+        print(exp_param, group_param)
+        print(df_sum.mean())
         # converting exp_dict['start_exp_date_utc'] to local time zone and then making it 'timezone unaware'
         # in order to compare with the also localised but 'timezone unaware' df_sum.index
         t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC).astimezone(pytz.timezone(exp_dict['time_zone'])).replace(tzinfo=None)
