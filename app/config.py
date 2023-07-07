@@ -331,8 +331,8 @@ elect_cost_name = 'Average room electricity cost (€) (ex. VAT)'  # number of r
 elect_carbon_name = 'Average room carbon footprint (kg CO2)'  # number of rooms across the group
 
 int_format = lambda x: f"{round(x)}" if x == x else x
-perc_format = lambda x: f"{x:.1%}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.1%}, {x[1]:.1%}]"
-dec_format = lambda x: f"{x:.2f}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.2f}, {x[1]:.2f}]"
+perc_format = lambda x: f"{x:.2%}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.1%}, {x[1]:.1%}]"
+dec_format = lambda x: f"{x:.3f}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.2f}, {x[1]:.2f}]"
 
 
 formatters = {

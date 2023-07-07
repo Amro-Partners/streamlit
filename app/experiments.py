@@ -39,7 +39,7 @@ def avg_all_rooms(df_dict_room):
 def get_exp_metrics(df_sum, flight_duration, exp_dict):
     # TODO: improve this formula once we store consumption with transform repo
     # 3.42 - avg daily total VRV consumption per room (external units included)
-    df_sum[cnf.elect_consump_name] = ((3.42  / (24 * 4)) * flight_duration.days
+    df_sum[cnf.elect_consump_name] = ((3.42) * flight_duration.days
                                       * df_sum[cnf.ac_usage_name])
     df_sum[cnf.elect_cost_name] = exp_dict['market_based_electricity_cost'] * df_sum[cnf.elect_consump_name]
     df_sum[cnf.elect_carbon_name] = exp_dict['location_based_co2'] * df_sum[cnf.elect_consump_name]
