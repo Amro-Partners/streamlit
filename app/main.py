@@ -80,7 +80,7 @@ def main():
      col2_consumpt, tab_consumpt_building_param, tab_consumpt_time_param, tab_consumpt_agg_param, tab_consumpt_metric_param, tab_consumpt_data_param,
      col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param) = set_homepage()  # Get choice of building
 
-    # # consumption
+    # consumption
     times.log(f'loading consumption data between {tab_consumpt_time_param[0].strftime("%Y-%m-%d")} AND {tab_consumpt_time_param[1].strftime("%Y-%m-%d")}')
     agg_param_dict = cnf.consumpt_agg_param_dict[tab_consumpt_agg_param]
     site_dict = cnf.sites_dict[tab_consumpt_building_param]
@@ -91,6 +91,8 @@ def main():
         agg_func = f'''DATE(DATE_TRUNC(timestamp, WEEK(MONDAY)))'''
     elif agg_param_dict['aggregation_bq'] == "MONTH":
         agg_func = f'''FORMAT_TIMESTAMP('%Y-%m', timestamp)'''
+    elif agg_param_dict['aggregation_bq'] == "HOUR":
+        agg_func = f'''FORMAT_TIMESTAMP('%H', timestamp)'''
 
     query = f'''
         SELECT
@@ -102,8 +104,8 @@ def main():
             END AS aggregate_value
         FROM {cnf.table_consumption}
         WHERE
-            Date(timestamp, "{site_dict['time_zone']}") BETWEEN '2023-02-01'# "{tab_consumpt_time_param[0].strftime("%Y-%m-%d")}"
-                AND '2023-06-30' # "{tab_consumpt_time_param[1].strftime("%Y-%m-%d")}"
+            Date(timestamp, "{site_dict['time_zone']}") BETWEEN  "{tab_consumpt_time_param[0].strftime("%Y-%m-%d")}"
+                AND "{tab_consumpt_time_param[1].strftime("%Y-%m-%d")}"
             AND building = "{tab_consumpt_building_param}"
             AND data_param IN {'('+ ','.join([f'"{t}"' for t in tab_consumpt_data_param])+')'}
         GROUP BY
@@ -157,19 +159,19 @@ def main():
                           scale=cnf.hmaps_figure_memory_scale,
                           col=col2_rooms_hmaps)
 
-    # # Room charts
-    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # # TODO: move the below loops and concatenation into transfer process
-    # site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
-    # where_cond = f''' WHERE
-    #     Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
-    #     AND building = "{tab_rooms_charts_building_param}"
-    #     AND room = "{tab_rooms_charts_room_param}"
-    # '''
-    # rooms_chart_df = bq.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
-    # cha.run_flow_charts(rooms_chart_df,
-    #                     st.session_state.chart_rooms_raw_data,
-    #                     site_dict['rooms_chart_cols'], col2_rooms_charts)
+    # Room charts
+    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # TODO: move the below loops and concatenation into transfer process
+    site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
+    where_cond = f''' WHERE
+        Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
+        AND building = "{tab_rooms_charts_building_param}"
+        AND room = "{tab_rooms_charts_room_param}"
+    '''
+    rooms_chart_df = bq.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
+    cha.run_flow_charts(rooms_chart_df,
+                        st.session_state.chart_rooms_raw_data,
+                        site_dict['rooms_chart_cols'], col2_rooms_charts)
 
     # AHU charts
     # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
@@ -187,7 +189,7 @@ def main():
 
     # experiments
     # exp_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # TODO: ince we move to BQ enable start_date longer than X days
+    # TODO: since we move to BQ enable start_date longer than X days
     start_date = (cnf.exp_dict[tab_exper_exp_param]['start_exp_date_utc']
                   - timedelta(days=cnf.exp_dict[tab_exper_exp_param]['calibration_days']))
     end_date = min(times.utc_now(), cnf.exp_dict[tab_exper_exp_param]['end_exp_date_utc'])
