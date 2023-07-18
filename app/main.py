@@ -159,19 +159,19 @@ def main():
                           scale=cnf.hmaps_figure_memory_scale,
                           col=col2_rooms_hmaps)
 
-    # # Room charts
-    # # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
-    # # TODO: move the below loops and concatenation into transfer process
-    # site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
-    # where_cond = f''' WHERE
-    #     Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
-    #     AND building = "{tab_rooms_charts_building_param}"
-    #     AND room = "{tab_rooms_charts_room_param}"
-    # '''
-    # rooms_chart_df = bq.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
-    # cha.run_flow_charts(rooms_chart_df,
-    #                     st.session_state.chart_rooms_raw_data,
-    #                     site_dict['rooms_chart_cols'], col2_rooms_charts)
+    # Room charts
+    # charts_dict structure: {building_param -> floor_param or collection title -> room --> df of all params}
+    # TODO: move the below loops and concatenation into transfer process
+    site_dict = cnf.sites_dict[tab_rooms_charts_building_param]
+    where_cond = f''' WHERE
+        Date(timestamp, "{site_dict['time_zone']}") BETWEEN "{date_last_week.strftime("%Y-%m-%d")}" AND "{date_yesterday.strftime("%Y-%m-%d")}"
+        AND building = "{tab_rooms_charts_building_param}"
+        AND room = "{tab_rooms_charts_room_param}"
+    '''
+    rooms_chart_df = bq.read_bq(bq_client, cnf.table_charts_rooms, where_cond)
+    cha.run_flow_charts(rooms_chart_df,
+                        st.session_state.chart_rooms_raw_data,
+                        site_dict['rooms_chart_cols'], col2_rooms_charts)
 
     # AHU charts
     # charts_dict structure: {building_param -> ventilation unit (e.g. CL01) --> df of all params}
