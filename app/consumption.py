@@ -126,7 +126,7 @@ def chart_df(df, agg_param, metric_param):
             x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
             y=alt.Y('value',
                     axis=alt.Axis(title='Outdoor avg. temperature (°C)', tickColor='white', domain=False, titleAngle=-90),
-                    scale=alt.Scale(domain=[8, 30], zero=False)),
+                    scale=alt.Scale(zero=False)),
             color=color))
         chart = alt.layer(chart, temp_line).resolve_scale(y='independent')
     return chart # alt.layer(chart, temp_line).resolve_scale(y='independent')
