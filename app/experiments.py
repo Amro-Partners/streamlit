@@ -224,7 +224,7 @@ def get_selected_metric_df(_test_dict, _control_dict, exp_param, metric_param, a
 
 
 def chart_df(metric_df, exp_param, metric_param):
-    range_ = ['#0F4C3A', '#29AB87'] # ['red', 'black']
+    range_ = ['#0F4C3A', '#29AB87']
     metric_df.columns = [c.split('_')[-1] for c in metric_df.columns]
     domain = [c.split('_')[-1] for c in metric_df.columns]
 

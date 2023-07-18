@@ -101,24 +101,24 @@ def chart_df(df, agg_param, metric_param):
                        title=f'Comparison of {metric_param} with outdoor temperature').mark_line().encode(
         x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False),
-                scale=alt.Scale(domain=[00, 2000], zero=False)),
+                scale=alt.Scale(zero=False)),
         color=color))
 
-    # target_line = (alt.Chart(df['Building avg. consumption 2022'].reset_index().melt(agg_param))
-    #                      .mark_line(strokeDash=[10, 10])
-    #                      .encode(x=alt.X(agg_param, title=agg_param),
-    #                              y=alt.Y('value'),
-    #                              color=color))
-    # chart += target_line
-    #
-    # #################
-    # target_line = (alt.Chart(df['Building target consumption 2023'].reset_index().melt(agg_param))
-    #                      .mark_line(strokeDash=[10, 10])
-    #                      .encode(x=alt.X(agg_param, title=agg_param),
-    #                              y=alt.Y('value'),
-    #                              color=color))
-    # chart += target_line
-    # #################
+    target_line = (alt.Chart(df['Building avg. consumption 2022'].reset_index().melt(agg_param))
+                         .mark_line(strokeDash=[10, 10])
+                         .encode(x=alt.X(agg_param, title=agg_param),
+                                 y=alt.Y('value'),
+                                 color=color))
+    chart += target_line
+
+    #################
+    target_line = (alt.Chart(df['Building target consumption 2023'].reset_index().melt(agg_param))
+                         .mark_line(strokeDash=[10, 10])
+                         .encode(x=alt.X(agg_param, title=agg_param),
+                                 y=alt.Y('value'),
+                                 color=color))
+    chart += target_line
+    #################
 
     if 'outdoor temperature' in df.columns:
         temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(
