@@ -167,12 +167,6 @@ hmps_agg_param_dict = {
 
 # TODO: we need to localise the start_date and end_date
 consumpt_agg_param_dict = {
-    "Hour": {
-        'aggregation_bq': 'HOUR',
-        'building_consump_intensity_target': 6 * 12 / (365 * 24),  # 6kwh/m2 is our monthly target for
-        'aggregation_field_name': 'Hour',
-        'aggregation_strftime': '%Y-%m-%d',
-    },
     "Date": {
         'aggregation_bq': 'DATE',
         'building_consump_intensity_target': 6 * 12 / 365,  # 6kwh/m2 is our monthly target for
@@ -190,6 +184,12 @@ consumpt_agg_param_dict = {
         'building_consump_intensity_target': 6,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Month',
         'aggregation_strftime': '%Y-%m\n%B',
+    },
+    "Hour": {
+        'aggregation_bq': 'HOUR',
+        'building_consump_intensity_target': 6 * 12 / (365 * 24),  # 6kwh/m2 is our monthly target for
+        'aggregation_field_name': 'Hour',
+        'aggregation_strftime': '%Y-%m-%d',
     }
 }
 
