@@ -23,14 +23,25 @@ def set_params_consumpt(col1, col2):
         min_time = min_time - timedelta(days=min_time.weekday())
         max_time = max_time - timedelta(days=max_time.weekday())
 
+    if 'consump_time' in st.session_state:
+        time_param_value = st.session_state.consump_time
+    else:
+        time_param_value = (min_time, max_time)
+
     max_time = (max_time - timedelta(days=1)).replace(hour=23, minute=59, second=59)
     time_param = col1.slider('Select date range',
                              min_value=min_time,
                              max_value=max_time,
-                             value=(min_time, max_time),
+                             value=time_param_value,
                              key='consump_time')
     data_param_list = get_data_param_list(building_param, time_param)
-    data_param = col1.multiselect('Select data', data_param_list, default='Building energy consumption', key='consump_data')
+
+    if 'consump_data' in st.session_state:
+        data_param_data_param = st.session_state.consump_data
+    else:
+        data_param_data_param = 'Building energy consumption'
+
+    data_param = col1.multiselect('Select data', data_param_list, default=data_param_data_param, key='consump_data')
     data_param += ['outdoor temperature']
     raw_data = col2.checkbox("Show raw data", value=False, key="consump_raw_data")
     return building_param, time_param, agg_param, metric_param, data_param
@@ -82,34 +93,40 @@ def chart_df(df, agg_param, metric_param):
 
 
     #chart = (alt.Chart(df.drop(['outdoor temperature', 'Building target'], axis=1).reset_index().melt(agg_param),
-    chart = (alt.Chart(df.drop(['outdoor temperature', 'Building avg. consumption 2022', 'Building target consumption 2023'], axis=1).reset_index().melt(agg_param),
+    if 'outdoor temperature' in df.columns:
+        df_drop = df.drop(['outdoor temperature', 'Building avg. consumption 2022', 'Building target consumption 2023'], axis=1)
+    else:
+        df_drop = df.drop(['Building avg. consumption 2022', 'Building target consumption 2023'], axis=1)
+    chart = (alt.Chart(df_drop.reset_index().melt(agg_param),
                        title=f'Comparison of {metric_param} with outdoor temperature').mark_line().encode(
         x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
-        y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
+        y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False),
+                scale=alt.Scale(domain=[00, 2000], zero=False)),
         color=color))
 
-    target_line = (alt.Chart(df['Building avg. consumption 2022'].reset_index().melt(agg_param))
-                         .mark_line(strokeDash=[10, 10])
-                         .encode(x=alt.X(agg_param, title=agg_param),
-                                 y=alt.Y('value'),
-                                 color=color))
-    chart += target_line
+    # target_line = (alt.Chart(df['Building avg. consumption 2022'].reset_index().melt(agg_param))
+    #                      .mark_line(strokeDash=[10, 10])
+    #                      .encode(x=alt.X(agg_param, title=agg_param),
+    #                              y=alt.Y('value'),
+    #                              color=color))
+    # chart += target_line
+    #
+    # #################
+    # target_line = (alt.Chart(df['Building target consumption 2023'].reset_index().melt(agg_param))
+    #                      .mark_line(strokeDash=[10, 10])
+    #                      .encode(x=alt.X(agg_param, title=agg_param),
+    #                              y=alt.Y('value'),
+    #                              color=color))
+    # chart += target_line
+    # #################
 
-    #################
-    target_line = (alt.Chart(df['Building target consumption 2023'].reset_index().melt(agg_param))
-                         .mark_line(strokeDash=[10, 10])
-                         .encode(x=alt.X(agg_param, title=agg_param),
-                                 y=alt.Y('value'),
-                                 color=color))
-    chart += target_line
-    #################
-
-
-    temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(
-        strokeDash=[1, 1]).encode(
-        x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
-        y=alt.Y('value',
-                axis=alt.Axis(title='Outdoor avg. temperature (°C)', tickColor='white', domain=False, titleAngle=-90),
-                scale=alt.Scale(zero=False)),
-        color=color))
-    return alt.layer(chart, temp_line).resolve_scale(y='independent')
+    if 'outdoor temperature' in df.columns:
+        temp_line = (alt.Chart(df[['outdoor temperature']].reset_index().melt(agg_param), title=metric_param).mark_line(
+            strokeDash=[1, 1]).encode(
+            x=alt.X(agg_param, axis=alt.Axis(title=agg_param, tickColor='white', grid=False, domain=False, labelAngle=0)),
+            y=alt.Y('value',
+                    axis=alt.Axis(title='Outdoor avg. temperature (°C)', tickColor='white', domain=False, titleAngle=-90),
+                    scale=alt.Scale(domain=[8, 30], zero=False)),
+            color=color))
+        chart = alt.layer(chart, temp_line).resolve_scale(y='independent')
+    return chart # alt.layer(chart, temp_line).resolve_scale(y='independent')

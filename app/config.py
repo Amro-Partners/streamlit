@@ -11,11 +11,11 @@ storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
 
 # BQ tables
-table_consumption = 'consumption.consumption'
-table_heatmaps = 'heatmaps.heatmaps'
-table_charts_rooms = 'charts.rooms'
-table_charts_ahus = 'charts.ahus'
-table_exp_rooms = 'experiments.rooms'
+table_consumption = 'consumption.consumption_old'
+table_heatmaps = 'heatmaps.heatmaps_old'
+table_charts_rooms = 'charts.rooms_old'
+table_charts_ahus = 'charts.ahus_old'
+table_exp_rooms = 'experiments.rooms_old'
 
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
@@ -167,26 +167,29 @@ hmps_agg_param_dict = {
 
 # TODO: we need to localise the start_date and end_date
 consumpt_agg_param_dict = {
+    "Hour": {
+        'aggregation_bq': 'HOUR',
+        'building_consump_intensity_target': 6 * 12 / (365 * 24),  # 6kwh/m2 is our monthly target for
+        'aggregation_field_name': 'Hour',
+        'aggregation_strftime': '%Y-%m-%d',
+    },
     "Date": {
         'aggregation_bq': 'DATE',
         'building_consump_intensity_target': 6 * 12 / 365,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Date',
         'aggregation_strftime': '%Y-%m-%d',
-        'agg_func': 'sum'
     },
     "Week": {
         'aggregation_bq': 'WEEK',
         'building_consump_intensity_target': 6 * 12 / 52,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Week',
         'aggregation_strftime': '%Y week %W',
-        'agg_func': 'sum'
     },
     "Month": {
         'aggregation_bq': 'MONTH',
         'building_consump_intensity_target': 6,  # 6kwh/m2 is our monthly target for
         'aggregation_field_name': 'Month',
         'aggregation_strftime': '%Y-%m\n%B',
-        'agg_func': 'sum'
     }
 }
 
@@ -257,18 +260,7 @@ exp_dict = {
         'location_based_co2': 0.259,
         'sequential_A_B': True
     },
-    "Amro Seville tenants cooling temp set points": {
-        'time_zone': 'Europe/Madrid',
-        'groups_order': ['Control',
-                         'Test'],
-        'group_col': 'Group',
-        'start_exp_date_utc': datetime(2023, 6, 21, 8, 0),
-        'end_exp_date_utc': times.utc_now(),
-        'calibration_days': 0,
-        'market_based_electricity_cost': 0.370,
-        'location_based_co2': 0.259,
-        'sequential_A_B': False
-    },
+
     "Amro Valencia tenants AC shutdown": {
         'time_zone': 'Europe/Madrid',
         'groups_order': ['Control',
@@ -328,7 +320,7 @@ ac_usage_name = 'Percentage of A/C usage (%)'
 ref_usage_name = 'Percentage of Refrig. usage (%)'
 elect_consump_name = 'Average room electricity consumption (kWh)'  # number of rooms across the group
 elect_cost_name = 'Average room electricity cost (€) (ex. VAT)'  # number of rooms across the group
-elect_carbon_name = 'Average room carbon footprint (kg CO2)'  # number of rooms across the group
+elect_carbon_name = 'Average room carbon emission (kg CO2)'  # number of rooms across the group
 
 int_format = lambda x: f"{round(x)}" if x == x else x
 perc_format = lambda x: f"{x:.2%}" if type(x) in (float, np.float32, np.float64) else f"[{x[0]:.1%}, {x[1]:.1%}]"

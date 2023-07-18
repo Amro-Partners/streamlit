@@ -224,11 +224,12 @@ def get_selected_metric_df(_test_dict, _control_dict, exp_param, metric_param, a
 
 
 def chart_df(metric_df, exp_param, metric_param):
-    range_ = ['red', 'black']
+    range_ = ['#0F4C3A', '#29AB87'] # ['red', 'black']
     metric_df.columns = [c.split('_')[-1] for c in metric_df.columns]
     domain = [c.split('_')[-1] for c in metric_df.columns]
 
-    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=f'{exp_param}: Comparison of Test and Control groups').mark_line().encode(
+    chart = (alt.Chart(metric_df.reset_index().melt('Time'), title=f'{exp_param}: Comparison of Test and Control groups')
+    .mark_line(size=3).encode(
         x=alt.X('Time', axis=alt.Axis(title='Date', format="%Y-%m-%d", tickColor='white', grid=False, domain=False)),
         y=alt.Y('value', axis=alt.Axis(title=metric_param, tickColor='white', domain=False), scale=alt.Scale(zero=False)),
         color=alt.Color('variable',
@@ -237,8 +238,8 @@ def chart_df(metric_df, exp_param, metric_param):
                         scale=alt.Scale(domain=domain, range=range_)
                         )))
 
-    exp_dict = cnf.exp_dict[exp_param]
-    t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC)  # .astimezone(timezone(exp_dict['time_zone']))
-    xrule = (alt.Chart(pd.DataFrame({'Date': [t]}))
-             .mark_rule(strokeDash=[12, 6], strokeWidth=2).encode(x='Date:T', color=alt.value('#7f7f7f')))
-    return chart + xrule
+    # exp_dict = cnf.exp_dict[exp_param]
+    # t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC)  # .astimezone(timezone(exp_dict['time_zone']))
+    # xrule = (alt.Chart(pd.DataFrame({'Date': [t]}))
+    #          .mark_rule(strokeDash=[12, 6], strokeWidth=2).encode(x='Date:T', color=alt.value('#7f7f7f')))
+    return chart #+ xrule
