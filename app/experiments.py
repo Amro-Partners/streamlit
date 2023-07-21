@@ -71,8 +71,7 @@ def get_exp_summary_dict(_exp_df, exp_param):
         #              in cnf.data_param_dict.items() if param_dict['show_per_room']}))
 
         df_sum = get_exp_metrics(df_sum, flight_duration, exp_dict)
-        print(exp_param, group_param)
-        print(df_sum.mean())
+
         # converting exp_dict['start_exp_date_utc'] to local time zone and then making it 'timezone unaware'
         # in order to compare with the also localised but 'timezone unaware' df_sum.index
         t = exp_dict['start_exp_date_utc'].astimezone(pytz.UTC).astimezone(pytz.timezone(exp_dict['time_zone'])).replace(tzinfo=None)

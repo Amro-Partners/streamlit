@@ -1,7 +1,7 @@
 import plot
 import config as cnf
 import times
-from datetime import timedelta, timezone
+from datetime import timedelta
 import streamlit as st
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -28,11 +28,6 @@ def get_config_dicts(building_param, data_param, agg_param):
     param_dict = cnf.data_param_dict[data_param]
     agg_param_dict = cnf.hmps_agg_param_dict[agg_param]
     return building_dict, param_dict, agg_param_dict
-
-
-@st.cache_data(show_spinner=False, ttl=3600)
-def pivot_df(df, floor, index_col):
-    return df[df.floor == floor].pivot(index=index_col, columns='room', values='parameter_value')
 
 
 def plot_heatmap(df, fmt, title, xlabel, ylabel, scale, col):

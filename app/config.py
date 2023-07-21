@@ -11,11 +11,11 @@ storage_bucket = 'amro-partners.appspot.com'
 bq_project = "amro-partners"
 
 # BQ tables
-table_consumption = 'consumption.consumption_old'
-table_heatmaps = 'heatmaps.heatmaps_old'
-table_charts_rooms = 'charts.rooms_old'
-table_charts_ahus = 'charts.ahus_old'
-table_exp_rooms = 'experiments.rooms_old'
+table_consumption = 'consumption.consumption'
+table_heatmaps = 'heatmaps.heatmaps'
+table_charts_rooms = 'charts.rooms'
+table_charts_ahus = 'charts.ahus'
+table_exp_rooms = 'experiments.rooms'
 
 
 tabs = ["CONSUMPTION", "ROOMS HEATMAPS", "ROOMS CHARTS", "AHU CHARTS", "EXPERIMENTS", "OCCUPANCY", "WATER"]
@@ -55,7 +55,7 @@ sites_dict = {
     "Amro Malaga": {
         'time_zone': 'Europe/Madrid',
         'rooms_file': "rooms_codes_malaga.csv",
-        'vent_file': 'vent_codes_seville.csv',
+        'vent_file': 'vent_codes_malaga.csv',
         'floors_order': ["Planta S", "Planta B", "Planta 1", "Planta 2", "Planta 3",  "Planta 4"],
         'rooms_chart_cols': [
             ('Avg. room temperature (°C)', 'Heating temperature set point (°C)', 'Outside temperature (°C)'),

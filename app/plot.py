@@ -63,6 +63,7 @@ def charts(df, _max_datetime, chart_cols):
                                         orient="right", direction="vertical", title=''))
 
     df_line = _df_vars(chart_cols[0])
+
     chart_2_return = (alt.Chart(df_line.loc[df_line['Time'] <= _max_datetime]).mark_line().encode(
         x=alt.X('Time', axis=alt.Axis(title='Date', formatType="time", tickColor='white', grid=False, domain=False, format='%Y-%m-%d %H:%M')),
         y=alt.Y('value', axis=alt.Axis(title='Temperature (°C)', tickColor='white', domain=False),
@@ -96,7 +97,5 @@ def charts(df, _max_datetime, chart_cols):
                     scale=alt.Scale(zero=False, padding=0.3)),
             color=color
         ))
-
         chart_2_return = alt.layer(chart_2_return, chart_rate).resolve_scale(y='independent')
-
     return chart_2_return
