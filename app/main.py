@@ -13,7 +13,7 @@ import utils as utils
 
 
 warnings.filterwarnings('ignore')
-st.set_page_config(layout="wide")
+# st.set_page_config(layout="wide")
 
 
 # reboot the web app every midnight (UTC timezone) for up to 365 times

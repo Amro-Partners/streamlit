@@ -2,8 +2,10 @@ import yaml
 from yaml.loader import SafeLoader
 import streamlit as st
 import streamlit_authenticator as stauth
-from streamlit.web import bootstrap
-# import main
+import main
+
+# Set the page configuration to wide mode globally.
+st.set_page_config(layout="wide")
 
 # Read config file with hashed passwords
 try:
@@ -22,19 +24,26 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 
-def login():
-    # Get user information from login page
-    name, authentication_status, username = authenticator.login('Login', 'main')
+def logout():
+    return authenticator.logout('Logout', 'main', key='unique_key')
 
-    if st.session_state["authentication_status"]:
-        authenticator.logout('Logout', 'main', key='unique_key')
-        st.write(f'Welcome *{st.session_state["name"]}*')
-        st.title('Some content')
-        # main()
+def centered_login():
+    # Create empty columns for the sides to simulate centered content
+    col1, col2, col3 = st.columns([1,2,1])
+    
+    with col2:
+        # The actual login components and logic go here
+        name, authentication_status, username = authenticator.login('Login', 'main')
 
-    elif st.session_state["authentication_status"] is False:
-        st.error('Username/password is incorrect')
-    elif st.session_state["authentication_status"] is None:
-        st.warning('Please enter your username and password')
+        if st.session_state.get("authentication_status"):
+            # Execute the main.py script
+            main.main()
+            # Add the logout button under the dashboard
+            logout()
+        elif st.session_state.get("authentication_status") is False:
+            st.error('Username/password is incorrect')
+        elif st.session_state.get("authentication_status") is None:
+            st.warning('Please enter your username and password')
 
-login()
+if __name__ == '__main__':
+    centered_login()
