@@ -10,12 +10,8 @@ import experiments as exp
 import consumption as cons
 import warnings
 import utils as utils
-
-# imports for authentication
-import yaml
-from yaml.loader import SafeLoader
-import streamlit as st
 import streamlit_authenticator as stauth
+from auth import auth_dict
 
 
 warnings.filterwarnings('ignore')
@@ -26,14 +22,7 @@ st.set_page_config(layout="wide")
 
 
 def get_authenticator():
-    # Read config file with hashed passwords
-    try:
-        with open('../auth.yaml') as file:
-            config = yaml.load(file, Loader=SafeLoader)
-    except FileNotFoundError:
-        st.error("The configuration file was not found.")
-        st.stop()
-
+    config = auth_dict
     # Initiate and return authenticator
     authenticator = stauth.Authenticate(
         config['credentials'],
