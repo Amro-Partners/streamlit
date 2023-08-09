@@ -11,13 +11,37 @@ import consumption as cons
 import warnings
 import utils as utils
 
+# imports for authentication
+import yaml
+from yaml.loader import SafeLoader
+import streamlit as st
+import streamlit_authenticator as stauth
+
 
 warnings.filterwarnings('ignore')
-# st.set_page_config(layout="wide")
-
+st.set_page_config(layout="wide")
 
 # reboot the web app every midnight (UTC timezone) for up to 365 times
 #count = st_autorefresh(interval=times.milliseconds_until_midnight(), limit=365, key="fizzbuzzcounter")
+
+
+def get_authenticator():
+    # Read config file with hashed passwords
+    try:
+        with open('../auth.yaml') as file:
+            config = yaml.load(file, Loader=SafeLoader)
+    except FileNotFoundError:
+        st.error("The configuration file was not found.")
+        st.stop()
+
+    # Initiate and return authenticator
+    authenticator = stauth.Authenticate(
+        config['credentials'],
+        config['cookie']['name'],
+        config['cookie']['key'],
+        config['cookie']['expiry_days'],
+        config['preauthorized'])
+    return authenticator
 
 
 def _line_space(cols_list, lines_list):
@@ -69,7 +93,7 @@ def set_homepage():
             col2_exper, tab_exper_exp_param, tab_exper_metric_param, tab_exper_agg_param)
 
 
-def main():
+def dashboard(authenticator):
     date_yesterday = (times.utc_now() - timedelta(days=1))
     date_last_week = (times.utc_now() - timedelta(days=7))
 
@@ -256,6 +280,23 @@ def main():
             chart = exp.chart_df(metric_df, tab_exper_exp_param, tab_exper_metric_param)
             col2_exper.altair_chart(chart.interactive(), use_container_width=True)
             exp.show_summary_tables(test_dict, control_dict, col2_exper, tab_exper_exp_param)
+    
+    # Add the logout button under the dashboard
+    authenticator.logout('Logout', 'main', key='unique_key')
+
+def main():
+    # The actual login components and logic go here
+    authenticator = get_authenticator()
+    name, authentication_status, username = authenticator.login('Login', 'main')
+    if authentication_status:
+        # Load the dashboard
+        dashboard(authenticator)
+        # # Add the logout button under the dashboard
+        # authenticator.logout('Logout', 'main', key='unique_key')
+    elif authentication_status is False:
+        st.error('Username/password is incorrect')
+    elif authentication_status is None:
+        st.warning('Please enter your username and password')
 
 
 main()
