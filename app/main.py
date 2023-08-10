@@ -11,7 +11,7 @@ import consumption as cons
 import warnings
 import utils as utils
 import streamlit_authenticator as stauth
-from auth import auth_dict
+import json
 
 
 warnings.filterwarnings('ignore')
@@ -22,7 +22,9 @@ st.set_page_config(layout="wide")
 
 
 def get_authenticator():
-    config = auth_dict
+
+    config = json.loads(st.secrets["auth_config"])
+
     # Initiate and return authenticator
     authenticator = stauth.Authenticate(
         config['credentials'],
