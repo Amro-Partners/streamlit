@@ -9,6 +9,7 @@ import charts as cha
 import experiments as exp
 import consumption as cons
 import warnings
+import pandas as pd
 import utils as utils
 
 
@@ -211,26 +212,34 @@ def main():
             COUNT(DISTINCT room) as rooms_count
         from
         (
-          SELECT 
-          experiment_name,
-            DATETIME(timestamp, "{cnf.exp_dict[tab_exper_exp_param]['time_zone']}") as timestamp, 
-            floor,
-            room,
-            CASE WHEN data_param = 'average_room_temperature' THEN parameter_value END as average_room_temperature,
-            CASE WHEN data_param = 'cooling_temperature_setpoint' THEN parameter_value END as cooling_temperature_setpoint,
-            CASE WHEN data_param = 'heating_temperature_setpoint' THEN parameter_value END as heating_temperature_setpoint,
-            CASE WHEN data_param = 'percentage_of_ac_usage' THEN parameter_value END as percentage_of_ac_usage
-          FROM {cnf.table_exp_rooms}
-          WHERE 
-            timestamp BETWEEN "{start_date.strftime("%Y-%m-%d %H:%M:%S")}" AND "{end_date.strftime("%Y-%m-%d %H:%M:%S")}"
-            AND experiment_name = "{tab_exper_exp_param}"
+        Select timestamp, experiment_name, floor, room,
+            AVG(average_room_temperature) as average_room_temperature,
+            AVG(cooling_temperature_setpoint) as cooling_temperature_setpoint,
+            AVG(heating_temperature_setpoint) as heating_temperature_setpoint,
+            AVG(percentage_of_ac_usage) as percentage_of_ac_usage
+            FROM
+              (
+              SELECT 
+              experiment_name,
+                DATETIME(timestamp, "{cnf.exp_dict[tab_exper_exp_param]['time_zone']}") as timestamp, 
+                floor,
+                room,
+                CASE WHEN data_param = 'average_room_temperature' THEN parameter_value END as average_room_temperature,
+                CASE WHEN data_param = 'cooling_temperature_setpoint' THEN parameter_value END as cooling_temperature_setpoint,
+                CASE WHEN data_param = 'heating_temperature_setpoint' THEN parameter_value END as heating_temperature_setpoint,
+                CASE WHEN data_param = 'percentage_of_ac_usage' THEN parameter_value END as percentage_of_ac_usage
+              FROM {cnf.table_exp_rooms}
+              WHERE 
+                timestamp BETWEEN "{start_date.strftime("%Y-%m-%d %H:%M:%S")}" AND "{end_date.strftime("%Y-%m-%d %H:%M:%S")}"
+                AND experiment_name = "{tab_exper_exp_param}"
+            )
+            GROUP BY timestamp, experiment_name, floor, room
         )
         group by
           DATETIME_TRUNC(timestamp, HOUR),
           floor
             """
     exp_df = bq.send_bq_query(bq_client, query)
-    import pandas as pd
     exp_df['date'] = pd.to_datetime(exp_df['timestamp']).dt.date
 
     summary_dict = exp.get_exp_summary_dict(exp_df, tab_exper_exp_param)
