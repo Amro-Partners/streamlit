@@ -7,7 +7,6 @@ numpy==1.20.3
 #python-dateutil
 pandas>=1.5.0
 streamlit_autorefresh
-streamlit_authenticator
 #google-cloud-firestore
 #streamlit-aggrid
 altair
